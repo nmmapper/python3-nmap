@@ -29,3 +29,11 @@ from xml.etree import ElementTree as ET
 from utils import (get_nmap_path
 )
 
+
+class NmapCommandParser(object):
+    """
+    Object for parsing the xml results
+    """
+    def __init__(self):
+        pass  
+    
