@@ -102,6 +102,7 @@ class Nmap(object):
         self.host = host 
         
         dns_brute_args = "{host}  {default}".format(host=host, default=dns_brute)
+        
         dns_brute_command = self.default_command() + dns_brute_args
         dns_brute_shlex = shlex.split(dns_brute_command) # prepare it for popen
         
