@@ -28,6 +28,8 @@ import sys
 from xml.etree import ElementTree as ET
 from utils import (get_nmap_path
 )
+import simplejson as json
+import argparse
 
 __author__ = 'Wangolo Joel (info@nmapper.com)'
 __version__ = '0.1.1'
@@ -88,6 +90,29 @@ class Nmap(object):
         self.top_ports = self.filter_top_ports(xml_root)
         return self.top_ports 
         
+    def nmap_dns_brute_script(self, host, dns_brute="--script dns-brute.nse"):
+        """
+        Perform nmap scan usign the dns-brute script
+        
+        :param: host can be IP or domain
+        :param: default is the default top port
+        
+        nmap -oX - nmmapper.com --script dns-brute.nse
+        """
+        self.host = host 
+        
+        dns_brute_args = "{host}  {default}".format(host=host, default=dns_brute)
+        dns_brute_command = self.default_command() + dns_brute_args
+        dns_brute_shlex = shlex.split(dns_brute_command) # prepare it for popen
+        
+        # Run the command and get the output
+        output = self.run_command(dns_brute_shlex)
+        
+        # Begin parsing the xml response
+        xml_root = self.get_xml_et(output)
+        subdomains = self.filter_subdomains(xml_root)
+        return subdomains
+        
     def run_command(self, cmd):
         """
         Runs the nmap command using popen
@@ -144,6 +169,54 @@ class Nmap(object):
         else:
             return port_results
             
+    def filter_subdomains(self, xmlroot):
+        """
+        Given the xmlroot return the all the ports that are open from 
+        that tree
+        """
+        try:
+            subdomains_list = []
+            
+            scanned_host = xmlroot.find("host")
+            if(scanned_host):
+                hostscript = scanned_host.find("hostscript")
+                
+                script = None
+                first_table = None
+                final_result_table = None
+                
+                if(hostscript):
+                    script = hostscript.find("script")
+                    
+                if(hostscript):
+                    first_table = script.find("table")
+                    
+                if(first_table):
+                    final_result_table = first_table.findall("table")
+                
+                for table in final_result_table:
+                    script_results = dict()
+                    elem = table.findall("elem")
+                    
+                    if(len(elem) >= 2):
+                        address = elem[0]
+                        hostname = elem[1]
+                        
+                        script_results["address"]=address.text 
+                        script_results["hostname"]=hostname.text 
+                        subdomains_list.append(script_results)
+
+
+        except Exception as e:
+            raise(e)
+        else:
+            return subdomains_list
+            
 if __name__=="__main__":
+    parser = argparse.ArgumentParser(prog="Python3 nmap")
+    parser.add_argument('-d', '--d', help='Help', required=True)
+    args = parser.parse_args()
+
     nmap = Nmap()
-    print(nmap.scan_top_ports("192.168.178.1"))
+    result = nmap.nmap_dns_brute_script(args.d)
+    print(json.dumps(result, indent=4, sort_keys=True))
