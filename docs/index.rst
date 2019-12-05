@@ -30,7 +30,7 @@ But we wanted something that defines each nmap command and  each nmap script as 
    :linenos:
 
     import nmap3
-    nmap = Nmap()
+    nmap = nmap3.Nmap()
     
     result = nmap.nmap_version_detection("nmmapper.com")
 

@@ -18,7 +18,9 @@ $ nmap nmmapper.com  --script dns-brute.nse
 But in this python3 script again it's very easy you just do something like this
 ```py
 import nmap3
-results = nmap3.nmap_dns_brute_script("nmmapper.com")
+nmap = nmap3.Nmap()
+results = nmap.nmap_dns_brute_script("nmmapper.com")
+
 # And you would get your results in json
 [
     {
