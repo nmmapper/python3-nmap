@@ -54,3 +54,4 @@ html_static_path = ['_static']
 
 #-----PERSONAL----
 master_doc = 'index'
+source_suffix = '.rst'

@@ -134,6 +134,54 @@ class Nmap(object):
 
         services = self.version_parser(xml_root)
         return services
+        
+    def nmap_stealth_scan(self, host, arg="-sA"):
+        """
+        nmap -oX - nmmapper.com --script dns-brute.nse
+        """
+        # TODO
+        self.host = host
+
+        command_args = "{host}  {default}".format(host=host, default=arg)
+        command = self.default_command() + command_args
+        dns_brute_shlex = shlex.split(command) # prepare it for popen
+
+        # Run the command and get the output
+        output = self.run_command(dns_brute_shlex)
+        xml_root = self.get_xml_et(output)
+        
+    def nmap_detect_firewall(self, host, arg="-sA"): # requires root
+        """
+        nmap -oX - nmmapper.com --script dns-brute.nse
+        """
+        self.host = host
+
+        command_args = "{host}  {default}".format(host=host, default=arg)
+        command = self.default_command() + command_args
+        dns_brute_shlex = shlex.split(command) # prepare it for popen
+        
+        # TODO
+        
+        # Run the command and get the output
+        output = self.run_command(dns_brute_shlex)
+        xml_root = self.get_xml_et(output)
+
+    def nmap_os_detection(self, host, arg="-O"): # requires root
+        """
+        nmap -oX - nmmapper.com --script dns-brute.nse
+        NOTE: Requires root
+        """
+        self.host = host
+
+        command_args = "{host}  {default}".format(host=host, default=arg)
+        command = self.default_command() + command_args
+        dns_brute_shlex = shlex.split(command) # prepare it for popen
+ 
+        output = self.run_command(dns_brute_shlex)
+        xml_root = self.get_xml_et(output)
+        
+        os_identified = self.os_identifier_parser(xml_root)
+        return os_identified
 
     def run_command(self, cmd):
         """
@@ -231,6 +279,36 @@ class Nmap(object):
             raise(e)
         else:
             return service_version
+            
+    def os_identifier_parser(self, xmlroot):
+        """
+        Parser for identified os
+        """
+        try:
+            os_identified = []
+
+            host = xmlroot.find("host")
+            if(host):
+                os = host.find("os")
+                
+                if(host):
+                    osmatches = os.findall("osmatch")
+                    
+                    for match in osmatches:
+                        attrib = match.attrib
+                        
+                        for osclass in match.findall("osclass"):
+                            attrib["osclass"]=osclass.attrib
+                            
+                            for cpe in osclass.findall("cpe"):
+                                attrib["cpe"]=cpe.text 
+                                
+                        os_identified.append(attrib)
+                    
+        except Exception as e:
+            raise(e)
+        else:
+            return os_identified
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(prog="Python3 nmap")
@@ -239,5 +317,4 @@ if __name__=="__main__":
 
     nmap = Nmap()
     result = nmap.nmap_version_detection(args.d)
-    print(result)
-    #print(json.dumps(result, indent=4, sort_keys=True))
+    print(json.dumps(result, indent=4, sort_keys=True))
