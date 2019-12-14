@@ -97,6 +97,12 @@ But we wanted something that defines each nmap command and  each nmap script as 
     }
     ]
 
+This python3 program defines each `Nmap command <https://www.nmmapper.com/commands/nmap-commands/latest-nmap-7-commands/run-online/>`_
+ as a python3 method that can be called independently, this makes using nmap in python very easy. Right now the script is not yet complete, because we are still adding more nmap args and commands inside this script, but we are already using this script at `Nmmapper's <https://www.nmmapper.com/>`_
+ `online port scanner <https://www.nmmapper.com/st/networkmapper/nmap/online-port-scanning/>`_
+
+
+
 Contents
 ========
 
@@ -105,7 +111,18 @@ Contents
 
    overview
    installation
+   howto
+   nmap
    advanced
+
+Other reading
+=============
+* `Dnsdumpster <https://github.com/wangoloj/dnsdumpster>`_
+* `Spy-Subdomain-Finder <https://github.com/wangoloj/spyse-subdomain-finder>`_
+* `Censys-Subdomain Finder None Api <https://github.com/wangoloj/censys-subdomain-finder-non-api>`_
+* `Ethicaltools <https://ethicaltools.gitbook.io/subdomainfinder/>`_
+
+
 
 ==================
 Indices and tables
