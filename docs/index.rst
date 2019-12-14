@@ -102,11 +102,17 @@ Contents
 
 .. toctree::
    :maxdepth: 2
-   
-   overview  
-   installation
-   howto
 
+   overview
+   installation
+   advanced
+
+==================
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`search`
 
 
 

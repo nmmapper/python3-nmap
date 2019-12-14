@@ -1,3 +1,3 @@
 
-Installation and requirements
-========================================
+Installation
+============

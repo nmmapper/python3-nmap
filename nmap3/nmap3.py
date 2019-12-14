@@ -78,7 +78,8 @@ class Nmap(object):
         top_port_args = " {host} --top-ports {default}".format(host=host, default=default)
         top_port_command = self.default_command() + top_port_args
         top_port_shlex = shlex.split(top_port_command) # prepare it for popen
-
+        print(top_port_command)
+        
         # Run the command and get the output
         output = self.run_command(top_port_shlex)
         if not output:
@@ -182,7 +183,24 @@ class Nmap(object):
         
         os_identified = self.os_identifier_parser(xml_root)
         return os_identified
+        
+    def nmap_udp_scan(self, host, arg="-sU"): # requires root
+        """
+        nmap -oX - nmmapper.com --script dns-brute.nse
+        NOTE: Requires root
+        """
+        self.host = host
 
+        command_args = "{host}  {default}".format(host=host, default=arg)
+        command = self.default_command() + command_args
+        dns_brute_shlex = shlex.split(command) # prepare it for popen
+ 
+        output = self.run_command(dns_brute_shlex)
+        xml_root = self.get_xml_et(output)
+        
+        self.top_ports = self.filter_top_ports(xml_root)
+        return self.top_ports
+        
     def run_command(self, cmd):
         """
         Runs the nmap command using popen
@@ -316,5 +334,5 @@ if __name__=="__main__":
     args = parser.parse_args()
 
     nmap = Nmap()
-    result = nmap.nmap_version_detection(args.d)
+    result = nmap.scan_top_ports(args.d)
     print(json.dumps(result, indent=4, sort_keys=True))
