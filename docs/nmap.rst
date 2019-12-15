@@ -25,3 +25,14 @@ Sample nmap command
    
    $ nmap -A -T4 scanme.nmap.org
 
+Nmap option summary
+-------------------
+If you want to get a summary of nmap's command just run nmap without any command like this;
+
+.. code-block:: bash
+   :linenos:
+   
+   $ nmap 
+
+What come after that command is run is the option summary
+
