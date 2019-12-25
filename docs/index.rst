@@ -16,11 +16,6 @@ Home page
 * `https://www.nmmapper.com <https://www.nmmapper.com>`_
 
 
-Repository and source code
-==========================
-* `https://github.com/wangoloj/python3-nmap <https://github.com/wangoloj/python3-nmap>`_
-
-
 Rationale
 =========
 There is python-nmap projects out there hosted on bitbucket, which is the basic of our `online port scanner <https://www.nmmapper.com/st/networkmapper/nmap/online-port-scanning/>`_ at `Nmmapper <https://www.nmmapper.com>`_ But we wanted to extend our `online port scanner <https://www.nmmapper.com/st/networkmapper/nmap/online-port-scanning/>`_  with nmap features like running nmap scripts online. The existing projects does it very well, in fact we used the existing python-nmap project to run nmap's dns-brute script on our `subdomain finder tool <https://www.nmmapper.com/sys/tools/subdomainfinder/>`_
