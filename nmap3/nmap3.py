@@ -30,6 +30,7 @@ from utils import (get_nmap_path
 )
 import simplejson as json
 import argparse
+import nmapparser
 
 __author__ = 'Wangolo Joel (info@nmapper.com)'
 __version__ = '0.1.1'
@@ -184,22 +185,43 @@ class Nmap(object):
         os_identified = self.os_identifier_parser(xml_root)
         return os_identified
         
-    def nmap_udp_scan(self, host, arg="-sU"): # requires root
+    def nmap_subnet_scan(self, subnet, arg="-p-"): # requires root
         """
         nmap -oX - nmmapper.com --script dns-brute.nse
         NOTE: Requires root
         """
-        self.host = host
+        self.host = subnet
 
-        command_args = "{host}  {default}".format(host=host, default=arg)
+        command_args = "{host}  {default}".format(host=subnet, default=arg)
         command = self.default_command() + command_args
         dns_brute_shlex = shlex.split(command) # prepare it for popen
- 
+        
+        output = self.run_command(dns_brute_shlex)
+        print(output)
+        xml_root = self.get_xml_et(output)
+        
+        #self.top_ports = self.filter_top_ports(xml_root)
+        #return self.top_ports
+        
+    def nmap_list_scan(self, subnet, arg="-sL"): # requires root
+        """
+        The list scan is a degenerate form of host discovery that simply lists each host of the network(s) 
+        specified, without sending any packets to the target hosts.
+        
+        NOTE: /usr/bin/nmap  -oX  -  192.168.178.1/24  -sL
+        """
+        self.host = subnet
+        parser  = nmapparser.NmapCommandParser(None)
+        
+        command_args = "{host}  {default}".format(host=subnet, default=arg)
+        command = self.default_command() + command_args
+        dns_brute_shlex = shlex.split(command) # prepare it for popen
+             
         output = self.run_command(dns_brute_shlex)
         xml_root = self.get_xml_et(output)
         
-        self.top_ports = self.filter_top_ports(xml_root)
-        return self.top_ports
+        host_discovered = parser.parse_nmap_listscan(xml_root)
+        return host_discovered
         
     def run_command(self, cmd):
         """
@@ -334,5 +356,5 @@ if __name__=="__main__":
     args = parser.parse_args()
 
     nmap = Nmap()
-    result = nmap.scan_top_ports(args.d)
+    result = nmap.nmap_list_scan(args.d)
     print(json.dumps(result, indent=4, sort_keys=True))

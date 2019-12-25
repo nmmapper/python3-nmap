@@ -29,11 +29,43 @@ from xml.etree import ElementTree as ET
 from utils import (get_nmap_path
 )
 
-
 class NmapCommandParser(object):
     """
     Object for parsing the xml results
-    """
-    def __init__(self):
-        pass  
     
+    Each function below will correspond to the parse
+    for each nmap command or option.
+    """
+    def __init__(self, xml_et):
+        self.xml_et = xml_et
+        self.xml_root = None
+        
+    def parse_nmap_listscan(self, xml_root):
+        """
+        Performs parsin for nmap listscan xml rests
+        @ return DICT
+        """
+        host_list = []
+        try:
+            
+            if not xml_root:
+                return host_list
+            self.xml_root == xml_root
+            
+            hosts = xml_root.findall("host")
+            for host in hosts:
+                attrib = dict()
+                
+                if(host.find("status") != None):
+                    attrib = host.find("status").attrib
+          
+                if(host.find("address") != None):
+                    for attr in host.find("address").attrib:
+                        attrib[attr]=host.find("address").attrib.get(attr)
+                        
+                host_list.append(attrib)
+            return host_list
+            
+        except Exception:
+            return host_list
+        
