@@ -98,7 +98,14 @@ This python3 program defines each `Nmap command <https://www.nmmapper.com/comman
  as a python3 method that can be called independently, this makes using nmap in python very easy. Right now the script is not yet complete, because we are still adding more nmap args and commands inside this script, but we are already using this script at `Nmmapper's <https://www.nmmapper.com/>`_
  `online port scanner <https://www.nmmapper.com/st/networkmapper/nmap/online-port-scanning/>`_
 
+The following are some of the added commands from nmap and how to use them. In this script.
 
+ * Nmap top port scan
+ * Nmap dns-brute-script( to find subdomains and more )
+ * Nmap List scan
+ * Nmap os detection
+ * Nmap Subnet scan
+ * Nmap version detection
 
 Contents
 ========

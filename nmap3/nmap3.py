@@ -79,7 +79,6 @@ class Nmap(object):
         top_port_args = " {host} --top-ports {default}".format(host=host, default=default)
         top_port_command = self.default_command() + top_port_args
         top_port_shlex = shlex.split(top_port_command) # prepare it for popen
-        print(top_port_command)
         
         # Run the command and get the output
         output = self.run_command(top_port_shlex)
@@ -191,17 +190,16 @@ class Nmap(object):
         NOTE: Requires root
         """
         self.host = subnet
-
+        parser  = nmapparser.NmapCommandParser(None)
+        
         command_args = "{host}  {default}".format(host=subnet, default=arg)
         command = self.default_command() + command_args
         dns_brute_shlex = shlex.split(command) # prepare it for popen
-        
         output = self.run_command(dns_brute_shlex)
-        print(output)
         xml_root = self.get_xml_et(output)
         
-        #self.top_ports = self.filter_top_ports(xml_root)
-        #return self.top_ports
+        host_discovered = parser.parse_nmap_subnetscan(xml_root)
+        return host_discovered
         
     def nmap_list_scan(self, subnet, arg="-sL"): # requires root
         """
@@ -356,5 +354,5 @@ if __name__=="__main__":
     args = parser.parse_args()
 
     nmap = Nmap()
-    result = nmap.nmap_list_scan(args.d)
+    result = nmap.nmap_subnet_scan(args.d)
     print(json.dumps(result, indent=4, sort_keys=True))

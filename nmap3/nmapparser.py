@@ -68,4 +68,45 @@ class NmapCommandParser(object):
             
         except Exception:
             return host_list
+            
+    def parse_nmap_subnetscan(self, xml_root):
+        """
+        Performs parsin for nmap listscan xml rests
+        @ return DICT
+        """
+        host_list = []
+        try:
+            
+            if not xml_root:
+                return host_list
+            self.xml_root == xml_root
+            
+            hosts = xml_root.findall("host")
+            
+            for host in hosts:
+                attrib = host.find("address").attrib
+                ports = []
+                
+                if(host.find("hostnames")):
+                    for hn in host.find("hostnames").findall("hostname"):
+                        attrib["hostname"]=hn.attrib.get("name")
+                        attrib["ptr"]=hn.attrib.get("type")
+                
+                if host.find("ports"):
+                    for port in host.find("ports").findall("port"):
+                        port_attrib = port.attrib
+                        ports.append(
+                            {"port":port_attrib.get("portid"), "protocol":port_attrib.get("protocol"),
+                            "state":port.find("state").attrib.get("state")
+                            }
+                        )
+                        
+                attrib["ports"]=ports
+                
+                host_list.append(attrib)
+            return host_list
+            
+        except Exception as e:
+            raise 
+            return host_list
         

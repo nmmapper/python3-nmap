@@ -1,3 +1,4 @@
+
 # python3-nmap
 A python 3  library which helps in using nmap port scanner. The way this tools works is by defining each nmap command into a python function making it very easy to use sophisticated nmap commands in other python scripts.
 For example in nmap if you want to scan for common ports you would to something like this
@@ -195,4 +196,16 @@ version_result = nmap.nmap_version_detection("nmmapper.com")
     }
 ]
 ```
+### Nmap commands available
+The following nmaps commands have been added to the following scripts
+
+ - Nmap top port scan
+ - Nmap Dns-brute-script( to get subdomains )
+ - Nmap list scan
+ - Nmap Os detection
+ - Nmap subnet scan
+ - Nmap version detection
+
+More nmap commands are going to be added besides this
+
 ### More commands are going to be added daily
