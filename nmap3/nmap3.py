@@ -26,7 +26,7 @@ import shlex
 import subprocess
 import sys
 from xml.etree import ElementTree as ET
-from utils import (get_nmap_path
+from nmap3.utils import (get_nmap_path
 )
 import simplejson as json
 import argparse
