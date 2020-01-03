@@ -26,7 +26,7 @@ import shlex
 import subprocess
 import sys
 from xml.etree import ElementTree as ET
-from nmap3.utils import (get_nmap_path
+from utils import (get_nmap_path
 )
 import simplejson as json
 import argparse
@@ -348,11 +348,117 @@ class Nmap(object):
         else:
             return os_identified
 
+class NmapScanTechniques(Nmap):
+    """
+    Extends Nmap to include nmap commands
+    with different scan techniques
+    
+    This scan techniques include
+    
+    1) TCP SYN Scan (-sS)
+    2) TCP connect() scan (-sT)
+    3) FIN Scan (-sF)
+    4) Ping Scan (-sP)
+    5) Idle Scan (-sI)
+    """
+    
+    def __init__(self, path=None):
+        super(NmapScanTechniques, self).__init__(path=path)
+        
+        self.sync_scan = "-sS"
+        self.tcp_connt = "-sT"
+        self.fin_scan = "-sF"
+        self.ping_scan = "-sP"
+        self.idle_scan = "-sL"
+    
+    def nmap_fin_scan(self, host):
+        """
+        Perform scan using nmap's fin scan
+        
+        @cmd nmap -sF 192.168.178.1
+        """
+        fin_scan = " {host} {default}".format(host=host, default=self.fin_scan)
+        fin_scan_command = self.default_command() + fin_scan
+        fin_scan_shlex = shlex.split(fin_scan_command) # prepare it 
+        parser  = nmapparser.NmapCommandParser(None)
+        
+        # Use the ping scan parser
+        output = self.run_command(fin_scan_shlex)
+        xml_root = self.get_xml_et(output)
+        fin_results = parser.parse_nmap_idlescan(xml_root)
+        return fin_results
+        
+    def nmap_syn_scan(self, host):
+        """
+        Perform syn scan on this given
+        host
+        
+        @cmd nmap -sS 192.168.178.1
+        """
+        sync_scan = " {host} {default}".format(host=host, default=self.sync_scan)
+        sync_scan_command = self.default_command() + sync_scan
+        sync_scan_shlex = shlex.split(sync_scan_command) # prepare it 
+        
+        # Use the top_port_parser
+        output = self.run_command(sync_scan_shlex)
+        xml_root = self.get_xml_et(output)
+        self.top_ports = self.filter_top_ports(xml_root)
+        return self.top_ports
+        
+    def nmap_tcp_scan(self, host):
+        """
+        Scan host using the nmap tcp connect
+        
+        @cmd nmap -sT 192.168.178.1
+        """
+        tcp_scan = " {host} {default}".format(host=host, default=self.tcp_connt)
+        tcp_scan_command = self.default_command() + tcp_scan
+        tcp_scan_shlex = shlex.split(tcp_scan_command) # prepare it 
+        
+        # Use the top_port_parser
+        output = self.run_command(tcp_scan_shlex)
+        xml_root = self.get_xml_et(output)
+        tcp_results = self.filter_top_ports(xml_root)
+        return tcp_results
+    
+    def nmap_ping_scan(self, host):
+        """
+        Scan host using nmaps' ping scan
+        
+        @cmd nmap -sP 192.168.178.1
+        """
+        ping_scan = " {host} {default}".format(host=host, default=self.ping_scan)
+        ping_scan_command = self.default_command() + ping_scan
+        ping_scan_shlex = shlex.split(ping_scan_command) # prepare it 
+        parser  = nmapparser.NmapCommandParser(None)
+        
+        output = self.run_command(ping_scan_shlex)
+        xml_root = self.get_xml_et(output)
+        ping_results = parser.parse_nmap_pingscan(xml_root)
+        return ping_results 
+    
+    def nmap_idle_scan(self, host):
+        """
+        Using nmap idle_scan
+        
+        @cmd nmap -sL 192.168.178.1
+        """
+        idle_scan = " {host} {default}".format(host=host, default=self.idle_scan)
+        idle_scan_command = self.default_command() + idle_scan
+        idle_scan_shlex = shlex.split(idle_scan_command) # prepare it 
+        parser  = nmapparser.NmapCommandParser(None)
+        
+        # Use the ping scan parser
+        output = self.run_command(idle_scan_shlex)
+        xml_root = self.get_xml_et(output)
+        idle_results = parser.parse_nmap_pingscan(xml_root)
+        return idle_results 
+        
 if __name__=="__main__":
     parser = argparse.ArgumentParser(prog="Python3 nmap")
     parser.add_argument('-d', '--d', help='Help', required=True)
     args = parser.parse_args()
 
-    nmap = Nmap()
-    result = nmap.nmap_subnet_scan(args.d)
+    nmap = NmapScanTechniques()
+    result = nmap.nmap_syn_scan(args.d)
     print(json.dumps(result, indent=4, sort_keys=True))

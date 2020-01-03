@@ -206,6 +206,21 @@ The following nmaps commands have been added to the following scripts
  - Nmap subnet scan
  - Nmap version detection
 
-More nmap commands are going to be added besides this
+### ## Nmap Scanning Techniques
 
-### More commands are going to be added daily
+ - nmap_fin_scan
+   ```python
+   import nmap3
+   nmap = nmap3.NmapScanTechniques()
+   result = nmap.nmap_fin_scan("192.168.178.1")
+   ```
+   
+ - nmap_idle_scan
+ - nmap_ping_scan
+ - nmap_syn_scan
+ - nmap_tcp_scan
+
+## # Documentation
+
+ - [Readthedocs](nmap.readthedocs.io/)
+

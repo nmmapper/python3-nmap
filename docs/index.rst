@@ -129,6 +129,82 @@ Other reading
 * `Ethicaltools <https://ethicaltools.gitbook.io/subdomainfinder/>`_
 
 
+Nmap Scanning Techniques
+========================
+**TCP SYN Scan (-sS)**
+
+.. code-block:: python
+   :linenos:
+
+    import nmap3
+    nmap = nmap3.NmapScanTechniques()
+    
+    results = nmap.nmap_syn_scan()
+    
+    [
+    {
+        "port": "53",
+        "protocol": "tcp",
+        "reason": "syn-ack",
+        "reason_ttl": "64",
+        "service": {
+            "conf": "3",
+            "method": "table",
+            "name": "domain"
+        },
+        "state": "open"
+    },
+    {
+        "port": "80",
+        "protocol": "tcp",
+        "reason": "syn-ack",
+        "reason_ttl": "64",
+        "service": {
+            "conf": "3",
+            "method": "table",
+            "name": "http"
+        },
+        "state": "open"
+    }
+   ]
+
+
+**TCP connect() scan (-sT)**
+
+.. code-block:: python
+   :linenos:
+
+    import nmap3
+    nmap = nmap3.NmapScanTechniques()
+    results = nmap.nmap_tcp_scan()
+
+**FIN Scan (-sF)**
+
+.. code-block:: python
+   :linenos:
+
+    import nmap3
+    nmap = nmap3.NmapScanTechniques()
+    results = nmap.nmap_fin_scan()
+
+**Ping Scan (-sP)**
+
+.. code-block:: python
+   :linenos:
+
+    import nmap3
+    nmap = nmap3.NmapScanTechniques()
+    results = nmap.nmap_ping_scan()
+
+**Idle Scan (-sI))**
+
+.. code-block:: python
+   :linenos:
+
+    import nmap3
+    nmap = nmap3.NmapScanTechniques()
+    results = nmap.nmap_idle_scan()
+
 ==================
 Indices and tables
 ==================

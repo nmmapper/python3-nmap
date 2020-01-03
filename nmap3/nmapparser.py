@@ -110,3 +110,80 @@ class NmapCommandParser(object):
             raise 
             return host_list
         
+    def parse_nmap_pingscan(self, xml_root):
+        """
+        Performs parsing for nmap pingscan xml rests
+        @ return DICT
+        """
+        ping_status = dict()
+        try:
+            
+            if not xml_root:
+                return host_list
+            self.xml_root == xml_root
+            host = xml_root.find("host")
+            
+            if(host):
+                ping_status = host.find('status').attrib
+                address = []
+                hostname = []
+                
+                for addr in host.findall("address"):
+                    address.append(addr.attrib)
+                ping_status["addresses"]=address
+                
+                if(host.find("hostnames")):
+                    for host_n in host.find("hostnames").findall("hostname"):
+                        hostname.append(host_n.attrib)
+                ping_status["hostname"]=hostname
+                
+            return ping_status
+        except Exception as e:
+            raise
+            
+    def parse_nmap_idlescan(self, xml_root):
+        """
+        Performs parsing for nmap idlescan xml rests
+        @ return DICT
+        """
+        idle_scan = dict()
+        try:
+            
+            if not xml_root:
+                return host_list
+            self.xml_root == xml_root
+            host = xml_root.find("host")
+            
+            if(host):
+                address = []
+                hostname = []
+                ports = []
+                
+                for addr in host.findall("address"):
+                    address.append(addr.attrib)
+                idle_scan["addresses"]=address
+                
+                if(host.find("hostnames")):
+                    for host_n in host.find("hostnames").findall("hostname"):
+                        hostname.append(host_n.attrib)
+                idle_scan["hostname"]=hostname
+                
+                port = host.find("ports")
+                port_dict = dict()
+                
+                if(port):
+                    for open_ports in port.findall("port"):
+                        port_dict = open_ports.attrib
+                        
+                        if(open_ports.find('state')):
+                            port_dict['state']=open_ports.find('state').attrib
+                            
+                        if(open_ports.find('service')):
+                            port_dict['service']=open_ports.find('service').attrib
+                            
+                idle_scan["ports"]=port_dict
+                
+            return idle_scan
+        except Exception as e:
+            raise
+        

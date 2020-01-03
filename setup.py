@@ -8,7 +8,7 @@ setuptools.setup(
     version="0.1.1",
     author="Wangolo Joel",
     author_email="info@nmmapper.com",
-    description="Python3-nmap converts Nmap commands into python3 methods",
+    description="Python3-nmap converts Nmap commands into python3 methods making it very easy to use nmap in any of your python pentesting projects",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/wangoloj/python3-nmap",
