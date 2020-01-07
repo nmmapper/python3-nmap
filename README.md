@@ -222,5 +222,5 @@ The following nmaps commands have been added to the following scripts
 
 ## # Documentation
 
- - [Readthedocs](nmap.readthedocs.io/)
+ - [Readthedocs](https://nmap.readthedocs.io/)
 
