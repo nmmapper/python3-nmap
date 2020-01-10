@@ -453,7 +453,18 @@ class NmapScanTechniques(Nmap):
         xml_root = self.get_xml_et(output)
         idle_results = parser.parse_nmap_pingscan(xml_root)
         return idle_results 
-        
+
+class NmapHostDiscovery(Nmap):
+    """
+    This object will perform host discovery
+       
+    1) Only port scan    (-Pn)
+    2) Only host discover    (-sn)
+    3) Arp discovery on a local network  (-PR)
+    4) Disable DNS resolution    (-n)
+    """
+    pass
+    
 if __name__=="__main__":
     parser = argparse.ArgumentParser(prog="Python3 nmap")
     parser.add_argument('-d', '--d', help='Help', required=True)

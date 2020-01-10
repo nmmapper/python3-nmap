@@ -127,6 +127,9 @@ Other reading
 * `Spy-Subdomain-Finder <https://github.com/wangoloj/spyse-subdomain-finder>`_
 * `Censys-Subdomain Finder None Api <https://github.com/wangoloj/censys-subdomain-finder-non-api>`_
 * `Ethicaltools <https://ethicaltools.gitbook.io/subdomainfinder/>`_
+* `theHarvester online <https://www.nmmapper.com/kalitools/theharvester/email-harvester-tool/online/>`_
+* `Wappalyzer online <https://www.nmmapper.com/st/cms-detection/wappalyzer-online/>`_
+* `Whatweb online <https://www.nmmapper.com/tools/cms-detection/whatweb-online/WhatWeb/>`_
 
 
 Nmap Scanning Techniques
