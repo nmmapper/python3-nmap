@@ -34,7 +34,7 @@ from .nmapparser import *
 
 __author__ = 'Wangolo Joel (info@nmapper.com)'
 __version__ = '0.1.1'
-__last_modification__ = '2019/11/22'
+__last_modification__ = '2020/01/16'
 
 class Nmap(object):
     """
