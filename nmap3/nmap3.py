@@ -26,11 +26,11 @@ import shlex
 import subprocess
 import sys
 from xml.etree import ElementTree as ET
-from utils import (get_nmap_path
+from .utils import (get_nmap_path
 )
 import simplejson as json
 import argparse
-import nmapparser
+from .nmapparser import *
 
 __author__ = 'Wangolo Joel (info@nmapper.com)'
 __version__ = '0.1.1'
@@ -190,7 +190,7 @@ class Nmap(object):
         NOTE: Requires root
         """
         self.host = subnet
-        parser  = nmapparser.NmapCommandParser(None)
+        parser  = NmapCommandParser(None)
         
         command_args = "{host}  {default}".format(host=subnet, default=arg)
         command = self.default_command() + command_args
@@ -209,7 +209,7 @@ class Nmap(object):
         NOTE: /usr/bin/nmap  -oX  -  192.168.178.1/24  -sL
         """
         self.host = subnet
-        parser  = nmapparser.NmapCommandParser(None)
+        parser  = NmapCommandParser(None)
         
         command_args = "{host}  {default}".format(host=subnet, default=arg)
         command = self.default_command() + command_args
@@ -380,7 +380,7 @@ class NmapScanTechniques(Nmap):
         fin_scan = " {host} {default}".format(host=host, default=self.fin_scan)
         fin_scan_command = self.default_command() + fin_scan
         fin_scan_shlex = shlex.split(fin_scan_command) # prepare it 
-        parser  = nmapparser.NmapCommandParser(None)
+        parser  = NmapCommandParser(None)
         
         # Use the ping scan parser
         output = self.run_command(fin_scan_shlex)
@@ -430,7 +430,7 @@ class NmapScanTechniques(Nmap):
         ping_scan = " {host} {default}".format(host=host, default=self.ping_scan)
         ping_scan_command = self.default_command() + ping_scan
         ping_scan_shlex = shlex.split(ping_scan_command) # prepare it 
-        parser  = nmapparser.NmapCommandParser(None)
+        parser  = NmapCommandParser(None)
         
         output = self.run_command(ping_scan_shlex)
         xml_root = self.get_xml_et(output)
@@ -446,7 +446,7 @@ class NmapScanTechniques(Nmap):
         idle_scan = " {host} {default}".format(host=host, default=self.idle_scan)
         idle_scan_command = self.default_command() + idle_scan
         idle_scan_shlex = shlex.split(idle_scan_command) # prepare it 
-        parser  = nmapparser.NmapCommandParser(None)
+        parser  = NmapCommandParser(None)
         
         # Use the ping scan parser
         output = self.run_command(idle_scan_shlex)
