@@ -26,6 +26,9 @@ import shlex
 import subprocess
 import sys
 from xml.etree import ElementTree as ET
+#from nmap3.utils import get_nmap_path
+#sys.path.append(os.path.dirname(os.path.realpath (__file__)))
+
 from .utils import (get_nmap_path
 )
 import simplejson as json
