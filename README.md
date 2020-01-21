@@ -1,4 +1,5 @@
 
+
 # python3-nmap
 A python 3  library which helps in using nmap port scanner. The way this tools works is by defining each nmap command into a python function making it very easy to use sophisticated nmap commands in other python scripts.
 For example in nmap if you want to scan for common ports you would to something like this
@@ -224,3 +225,21 @@ The following nmaps commands have been added to the following scripts
 
  - [Readthedocs](https://nmap.readthedocs.io/)
 
+## TODO
+We need to add more nmap options for host discovery
+
+NmapHostDiscovery
+
+ -  Only port scan    (-Pn)
+ -  Only host discover    (-sn)
+ - Arp discovery on a local network  (-PR)
+ - Disable DNS resolution    (-n)
+
+## Cross-Selling
+* [Ethical-tools](https://ethicaltools.gitbook.io/subdomainfinder/)
+* [Wappalyzer online](https://www.nmmapper.com/st/cms-detection/wappalyzer-online/)
+* [Whatweb online](https://www.nmmapper.com/tools/cms-detection/whatweb-online/WhatWeb/)
+* [Raccoon By Offensive security](https://www.nmmapper.com/tools/reconnaissance-tools/raccoon-vulnerability-scanning/Raccoon%20tool/)
+* [Detect WAF](https://www.nmmapper.com/tools/reconnaissance-tools/waf/web-application-firewall-detector/)
+* [Dnsdumpster](https://dnsdumpster.readthedocs.io/)
+* [Become a patreon](https://www.patreon.com/nmmapper)

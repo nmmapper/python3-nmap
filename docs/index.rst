@@ -208,6 +208,17 @@ Nmap Scanning Techniques
     nmap = nmap3.NmapScanTechniques()
     results = nmap.nmap_idle_scan()
 
+**Cross Reading**
+ `Wappalyzer online <https://www.nmmapper.com/st/cms-detection/wappalyzer-online/>`_
+
+ `Whatweb online <https://www.nmmapper.com/tools/cms-detection/whatweb-online/WhatWeb/>`_ 
+
+ `Cmseek online <https://www.nmmapper.com/tools/reconnaissance-tools/cmseek-scanning/CMS%20Detection%20and%20Exploitation%20suite/>`_
+
+ `theHarvester online <https://www.nmmapper.com/kalitools/theharvester/email-harvester-tool/online/>`_
+
+  `Become a patreon <https://www.patreon.com/nmmapper>`_
+
 ==================
 Indices and tables
 ==================
