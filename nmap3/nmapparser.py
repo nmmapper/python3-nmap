@@ -26,8 +26,7 @@ import shlex
 import subprocess
 import sys
 from xml.etree import ElementTree as ET
-from .utils import (get_nmap_path
-)
+from nmap3.utils import get_nmap_path
 
 class NmapCommandParser(object):
     """
@@ -187,3 +186,46 @@ class NmapCommandParser(object):
         except Exception as e:
             raise
         
+        
+    def filter_subdomains(self, xmlroot):
+        """
+        Given the xmlroot return the all the ports that are open from 
+        that tree
+        """
+        try:
+            subdomains_list = []
+            
+            scanned_host = xmlroot.find("host")
+            if(scanned_host):
+                hostscript = scanned_host.find("hostscript")
+                
+                script = None
+                first_table = None
+                final_result_table = None
+                
+                if(hostscript):
+                    script = hostscript.find("script")
+                    
+                if(hostscript):
+                    first_table = script.find("table")
+                    
+                if(first_table):
+                    final_result_table = first_table.findall("table")
+                
+                for table in final_result_table:
+                    script_results = dict()
+                    elem = table.findall("elem")
+                    
+                    if(len(elem) >= 2):
+                        address = elem[0]
+                        hostname = elem[1]
+                        
+                        script_results["address"]=address.text 
+                        script_results["hostname"]=hostname.text 
+                        subdomains_list.append(script_results)
+
+
+        except Exception as e:
+            raise(e)
+        else:
+            return subdomains_list
