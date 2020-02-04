@@ -217,11 +217,8 @@ class NmapCommandParser(object):
                     elem = table.findall("elem")
                     
                     if(len(elem) >= 2):
-                        address = elem[0]
-                        hostname = elem[1]
-                        
-                        script_results["address"]=address.text 
-                        script_results["hostname"]=hostname.text 
+                        script_results[elem[0].attrib["key"]] = elem[0].text
+                        script_results[elem[1].attrib["key"]] = elem[1].text
                         subdomains_list.append(script_results)
 
 
