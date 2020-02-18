@@ -93,7 +93,7 @@ class Nmap(object):
 
     def nmap_dns_brute_script(self, host, dns_brute="--script dns-brute.nse"):
         """
-        Perform nmap scan usign the dns-brute script
+        Perform nmap scan using the dns-brute script
 
         :param: host can be IP or domain
         :param: default is the default top port
