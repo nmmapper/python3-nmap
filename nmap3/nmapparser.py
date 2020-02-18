@@ -26,7 +26,8 @@ import shlex
 import subprocess
 import sys
 from xml.etree import ElementTree as ET
-from nmap3.utils import get_nmap_path
+#from nmap3.utils import get_nmap_path
+from utils import get_nmap_path
 
 class NmapCommandParser(object):
     """
@@ -186,7 +187,6 @@ class NmapCommandParser(object):
         except Exception as e:
             raise
         
-        
     def filter_subdomains(self, xmlroot):
         """
         Given the xmlroot return the all the ports that are open from 
@@ -221,8 +221,40 @@ class NmapCommandParser(object):
                         script_results[elem[1].attrib["key"]] = elem[1].text
                         subdomains_list.append(script_results)
 
-
         except Exception as e:
             raise(e)
         else:
             return subdomains_list
+            
+    def parse_noportscan(self, xmlroot):
+        """
+        Given the xmlroot return the all the ports that are open from 
+        that tree
+        """
+        
+        result_dicts = {}
+        hosts_list=[]
+        
+        # Find all hosts 
+        all_hosts = xmlroot.findall("host")
+        for host in all_hosts:
+            
+            host_record = {}
+            if(host.find("status") != None):
+                for key in host.find("status").attrib:
+                    host_record[key]=host.find("status").attrib.get(key)
+                
+                for key in host.find("address").attrib:
+                    host_record[key]=host.find("address").attrib.get(key)
+                    
+            hosts_list.append(host_record)
+                
+        runstats = xmlroot.find("runstats")
+        if(runstats):
+            
+            if(runstats.find("finished") != None):
+                result_dicts["runtime"]=runstats.find("finished").attrib
+                result_dicts["status"]=runstats.find("hosts").attrib
+        
+        result_dicts["hosts"]=hosts_list
+        return result_dicts 
