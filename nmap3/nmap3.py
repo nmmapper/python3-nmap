@@ -62,7 +62,7 @@ class Nmap(object):
         """
         return self.default_args.format(nmap=self.nmaptool, outarg="-oX")
 
-    def scan_top_ports(self, host, default=10):
+    def scan_top_ports(self, host, default=10, args=None):
         """
         Perform nmap's top ports scan
 
@@ -75,13 +75,18 @@ class Nmap(object):
         if(default > self.maxport):
             raise ValueError("Port can not be greater than default 65389")
         self.host = host
-
+        
+        if(args):
+            assert(isinstance(args, str)), "Expected string got {0} instead".format(type(args))
+            
         top_port_args = " {host} --top-ports {default}".format(host=host, default=default)
-        top_port_command = self.default_command() + top_port_args
-        top_port_shlex = shlex.split(top_port_command) # prepare it for popen
-
+        scan_command = self.default_command() + top_port_args
+        if(args):
+            scan_command += " {0}".format(args)
+        scan_shlex = shlex.split(scan_command)
+        
         # Run the command and get the output
-        output = self.run_command(top_port_shlex)
+        output = self.run_command(scan_shlex)
         if not output:
             # Probaby and error was raise
             raise ValueError("Unable to perform requested command")
@@ -116,7 +121,7 @@ class Nmap(object):
         subdomains = parser.filter_subdomains(xml_root)
         return subdomains
 
-    def nmap_version_detection(self, host, arg="-sV"):
+    def nmap_version_detection(self, host, arg="-sV", args=None):
         """
         Perform nmap scan usign the dns-brute script
 
@@ -127,17 +132,18 @@ class Nmap(object):
         self.host = host
 
         command_args = "{host}  {default}".format(host=host, default=arg)
-        command = self.default_command() + command_args
-        dns_brute_shlex = shlex.split(command) # prepare it for popen
-
-        # Run the command and get the output
-        output = self.run_command(dns_brute_shlex)
+        scan_command = self.default_command() + command_args
+        if(args):
+            scan_command += " {0}".format(args)
+        scan_shlex = shlex.split(scan_command)
+        
+        output = self.run_command(scan_shlex)
         xml_root = self.get_xml_et(output)
 
         services = self.version_parser(xml_root)
         return services
 
-    def nmap_stealth_scan(self, host, arg="-sA"):
+    def nmap_stealth_scan(self, host, arg="-sA", args=None):
         """
         nmap -oX - nmmapper.com -sA
         """
@@ -145,30 +151,31 @@ class Nmap(object):
         self.host = host
 
         command_args = "{host}  {default}".format(host=host, default=arg)
-        command = self.default_command() + command_args
-        dns_brute_shlex = shlex.split(command) # prepare it for popen
+        scan_command = self.default_command() + command_args
+        if(args):
+            scan_command += " {0}".format(args)
+        scan_shlex = shlex.split(scan_command)
 
         # Run the command and get the output
-        output = self.run_command(dns_brute_shlex)
+        output = self.run_command(scan_shlex)
         xml_root = self.get_xml_et(output)
 
-    def nmap_detect_firewall(self, host, arg="-sA"): # requires root
+    def nmap_detect_firewall(self, host, arg="-sA", args=None): # requires root
         """
         nmap -oX - nmmapper.com -sA
+        @ TODO
         """
         self.host = host
 
         command_args = "{host}  {default}".format(host=host, default=arg)
-        command = self.default_command() + command_args
-        dns_brute_shlex = shlex.split(command) # prepare it for popen
-
+        scan_command = self.default_command() + command_args
+        if(args):
+            scan_command += " {0}".format(args)
+        scan_shlex = shlex.split(scan_command)
+        
         # TODO
 
-        # Run the command and get the output
-        output = self.run_command(dns_brute_shlex)
-        xml_root = self.get_xml_et(output)
-
-    def nmap_os_detection(self, host, arg="-O"): # requires root
+    def nmap_os_detection(self, host, arg="-O", args=None): # requires root
         """
         nmap -oX - nmmapper.com -O
         NOTE: Requires root
@@ -176,16 +183,18 @@ class Nmap(object):
         self.host = host
 
         command_args = "{host}  {default}".format(host=host, default=arg)
-        command = self.default_command() + command_args
-        dns_brute_shlex = shlex.split(command) # prepare it for popen
+        scan_command = self.default_command() + command_args
+        if(args):
+            scan_command += " {0}".format(args)
+        scan_shlex = shlex.split(scan_command)
 
-        output = self.run_command(dns_brute_shlex)
+        output = self.run_command(scan_shlex)
         xml_root = self.get_xml_et(output)
 
         os_identified = self.os_identifier_parser(xml_root)
         return os_identified
 
-    def nmap_subnet_scan(self, subnet, arg="-p-"): # requires root
+    def nmap_subnet_scan(self, subnet, arg="-p-", args=None): # requires root
         """
         nmap -oX - nmmapper.com -p-
         NOTE: Requires root
@@ -194,15 +203,18 @@ class Nmap(object):
         parser  = NmapCommandParser(None)
 
         command_args = "{host}  {default}".format(host=subnet, default=arg)
-        command = self.default_command() + command_args
-        dns_brute_shlex = shlex.split(command) # prepare it for popen
-        output = self.run_command(dns_brute_shlex)
+        scan_command = self.default_command() + command_args
+        if(args):
+            scan_command += " {0}".format(args)
+            
+        scan_shlex = shlex.split(scan_command)
+        output = self.run_command(scan_shlex)
         xml_root = self.get_xml_et(output)
 
         host_discovered = parser.parse_nmap_subnetscan(xml_root)
         return host_discovered
 
-    def nmap_list_scan(self, subnet, arg="-sL"): # requires root
+    def nmap_list_scan(self, subnet, arg="-sL", args=None): # requires root
         """
         The list scan is a degenerate form of host discovery that simply lists each host of the network(s)
         specified, without sending any packets to the target hosts.
@@ -213,10 +225,12 @@ class Nmap(object):
         parser  = NmapCommandParser(None)
 
         command_args = "{host}  {default}".format(host=subnet, default=arg)
-        command = self.default_command() + command_args
-        dns_brute_shlex = shlex.split(command) # prepare it for popen
+        scan_command = self.default_command() + command_args
+        if(args):
+            scan_command += " {0}".format(args)
+        scan_shlex = shlex.split(scan_command)
 
-        output = self.run_command(dns_brute_shlex)
+        output = self.run_command(scan_shlex)
         xml_root = self.get_xml_et(output)
 
         host_discovered = parser.parse_nmap_listscan(xml_root)
@@ -262,14 +276,12 @@ class Nmap(object):
                 # slowly parse what is required
                 for port in ports:
                     open_ports = {}
-
-                    open_ports["protocol"]=port.attrib.get("protocol")
-                    open_ports["port"]=port.attrib.get("portid")
-
+                    for key in port.attrib:
+                        open_ports[key]=port.attrib.get(key)
+                        
                     if port.find('state') != None:
-                        open_ports["state"]=port.find("state").attrib.get("state")
-                        open_ports["reason"]=port.find('state').attrib.get("reason")
-                        open_ports["reason_ttl"]=port.find("state").attrib.get("reason_ttl")
+                        for key in port.find('state').attrib:
+                            open_ports[key]=port.find("state").attrib.get(key)
 
                     if  port.find("service") != None:
                         open_ports["service"]=port.find("service").attrib
@@ -278,7 +290,6 @@ class Nmap(object):
             
             runstats = xmlroot.find("runstats")
             if(runstats):
-                
                 if(runstats.find("finished") != None):
                     port_result_dict["runtime"]=runstats.find("finished").attrib
                 
@@ -384,7 +395,7 @@ class NmapScanTechniques(Nmap):
         self.ping_scan = "-sP"
         self.idle_scan = "-sL"
 
-    def nmap_fin_scan(self, host):
+    def nmap_fin_scan(self, host, args=None):
         """
         Perform scan using nmap's fin scan
 
@@ -393,7 +404,9 @@ class NmapScanTechniques(Nmap):
         """
         fin_scan = " {host} {default}".format(host=host, default=self.fin_scan)
         fin_scan_command = self.default_command() + fin_scan
-        fin_scan_shlex = shlex.split(fin_scan_command) # prepare it
+        if(args):
+            fin_scan_command += " {0}".format(args)
+        fin_scan_shlex = shlex.split(fin_scan_command)
         parser  = NmapCommandParser(None)
 
         # Use the ping scan parser
@@ -402,7 +415,7 @@ class NmapScanTechniques(Nmap):
         fin_results = parser.parse_nmap_idlescan(xml_root)
         return fin_results
 
-    def nmap_syn_scan(self, host):
+    def nmap_syn_scan(self, host, args=None):
         """
         Perform syn scan on this given
         host
@@ -411,6 +424,8 @@ class NmapScanTechniques(Nmap):
         """
         sync_scan = " {host} {default}".format(host=host, default=self.sync_scan)
         sync_scan_command = self.default_command() + sync_scan
+        if(args):
+            sync_scan_command += " {0}".format(args)
         sync_scan_shlex = shlex.split(sync_scan_command) # prepare it
 
         # Use the top_port_parser
@@ -440,7 +455,7 @@ class NmapScanTechniques(Nmap):
         tcp_results = self.filter_top_ports(xml_root)
         return tcp_results
 
-    def nmap_ping_scan(self, host):
+    def nmap_ping_scan(self, host, args=None):
         """
         Scan host using nmaps' ping scan
 
@@ -448,6 +463,8 @@ class NmapScanTechniques(Nmap):
         """
         ping_scan = " {host} {default}".format(host=host, default=self.ping_scan)
         ping_scan_command = self.default_command() + ping_scan
+        if(args):
+            ping_scan_command += " {0}".format(args)
         ping_scan_shlex = shlex.split(ping_scan_command) # prepare it
         parser  = NmapCommandParser(None)
 
@@ -456,7 +473,7 @@ class NmapScanTechniques(Nmap):
         ping_results = parser.parse_nmap_pingscan(xml_root)
         return ping_results
 
-    def nmap_idle_scan(self, host):
+    def nmap_idle_scan(self, host, args=None):
         """
         Using nmap idle_scan
 
@@ -464,6 +481,8 @@ class NmapScanTechniques(Nmap):
         """
         idle_scan = " {host} {default}".format(host=host, default=self.idle_scan)
         idle_scan_command = self.default_command() + idle_scan
+        if(args):
+            idle_scan_command += " {0}".format(args)
         idle_scan_shlex = shlex.split(idle_scan_command) # prepare it
         parser  = NmapCommandParser(None)
 
@@ -585,6 +604,6 @@ if __name__=="__main__":
     parser.add_argument('-d', '--d', help='Help', required=True)
     args = parser.parse_args()
 
-    nmap = NmapHostDiscovery()
-    result = nmap.nmap_disable_dns(args.d)
+    nmap = Nmap()
+    result = nmap.nmap_version_detection(args.d)
     print(json.dumps(result, indent=4, sort_keys=True))

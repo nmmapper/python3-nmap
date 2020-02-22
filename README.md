@@ -1,5 +1,6 @@
 
 
+
 # python3-nmap
 A python 3  library which helps in using nmap port scanner. The way this tools works is by defining each nmap command into a python function making it very easy to use sophisticated nmap commands in other python scripts.
 For example in nmap if you want to scan for common ports you would to something like this
@@ -226,14 +227,23 @@ The following nmaps commands have been added to the following scripts
  - [Readthedocs](https://nmap.readthedocs.io/)
 
 ## TODO
-We need to add more nmap options for host discovery
+Added Nmap Host discovery techniques
+
+ - Only port scan    (-Pn)
+ - Only host discover    (-sn)
+ - Arp discovery on a local network  (-PR)
+ - Disable DNS resolution    (-n)
 
 NmapHostDiscovery
 
- -  Only port scan    (-Pn)
- -  Only host discover    (-sn)
- - Arp discovery on a local network  (-PR)
- - Disable DNS resolution    (-n)
+ -  `def nmap_portscan_only(self, host, args=None)`
+ -  `def nmap_no_portscan(self, host, args=None):`
+ -  `def nmap_arp_discovery(self, host, args=None):`
+ -  `def nmap_disable_dns(self, host, args=None):`
+
+## Upcoming fixes
+There are still many things that need to be cleaned and fixed in this 
+For example when a user scans and entire subnet.  Also there is a need to return even the IP of the host that has been scanned.
 
 ## Cross-Selling
 * [Ethical-tools](https://ethicaltools.gitbook.io/subdomainfinder/)
