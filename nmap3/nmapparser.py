@@ -259,3 +259,46 @@ class NmapCommandParser(object):
         
         result_dicts["hosts"]=hosts_list
         return result_dicts 
+    
+    def filter_top_ports(self, xmlroot):
+        """
+        Given the xmlroot return the all the ports that are open from
+        that tree
+        """
+        try:
+            port_result_dict = {}
+            
+            scanned_host = xmlroot.findall("host")
+            stats = xmlroot.attrib
+            
+            for hosts in scanned_host:
+                address = hosts.find("address").get("addr")
+                
+                ports = hosts.find("ports").findall("port")
+                port_results =[]
+                
+                for port in ports:
+                    open_ports = {}
+                    for key in port.attrib:
+                        open_ports[key]=port.attrib.get(key)
+                        
+                    if port.find('state') != None:
+                        for key in port.find('state').attrib:
+                            open_ports[key]=port.find("state").attrib.get(key)
+
+                    if  port.find("service") != None:
+                        open_ports["service"]=port.find("service").attrib
+
+                    port_results.append(open_ports)
+                port_result_dict[address]=port_results
+                
+            runstats = xmlroot.find("runstats")
+            if(runstats):
+                if(runstats.find("finished") != None):
+                    port_result_dict["runtime"]=runstats.find("finished").attrib
+            port_result_dict["stats"]=stats
+            
+        except Exception as e:
+            raise(e)
+        else:
+            return port_result_dict

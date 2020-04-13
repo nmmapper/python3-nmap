@@ -71,7 +71,8 @@ class Nmap(object):
 
         This top port requires root previledges
         """
-
+        parser  = NmapCommandParser(None)
+        
         if(default > self.maxport):
             raise ValueError("Port can not be greater than default 65389")
         self.host = host
@@ -93,7 +94,7 @@ class Nmap(object):
 
         # Begin parsing the xml response
         xml_root = self.get_xml_et(output)
-        self.top_ports = self.filter_top_ports(xml_root)
+        self.top_ports = parser.filter_top_ports(xml_root)
         return self.top_ports
 
     def nmap_dns_brute_script(self, host, dns_brute="--script dns-brute.nse"):
@@ -258,49 +259,6 @@ class Nmap(object):
         """
         return ET.fromstring(command_output)
 
-    def filter_top_ports(self, xmlroot):
-        """
-        Given the xmlroot return the all the ports that are open from
-        that tree
-        """
-        try:
-            port_results = []
-            port_result_dict = {}
-            
-            scanned_host = xmlroot.find("host")
-            stats = xmlroot.attrib
-            
-            if(scanned_host):
-                ports = scanned_host.find("ports").findall("port")
-
-                # slowly parse what is required
-                for port in ports:
-                    open_ports = {}
-                    for key in port.attrib:
-                        open_ports[key]=port.attrib.get(key)
-                        
-                    if port.find('state') != None:
-                        for key in port.find('state').attrib:
-                            open_ports[key]=port.find("state").attrib.get(key)
-
-                    if  port.find("service") != None:
-                        open_ports["service"]=port.find("service").attrib
-
-                    port_results.append(open_ports)
-            
-            runstats = xmlroot.find("runstats")
-            if(runstats):
-                if(runstats.find("finished") != None):
-                    port_result_dict["runtime"]=runstats.find("finished").attrib
-                
-            port_result_dict["ports"]=port_results
-            port_result_dict["stats"]=stats
-            
-        except Exception as e:
-            raise(e)
-        else:
-            return port_result_dict
-
     def version_parser(self, xmlroot):
         """
         Parse version detected
@@ -422,6 +380,8 @@ class NmapScanTechniques(Nmap):
 
         @cmd nmap -sS 192.168.178.1
         """
+        parser  = NmapCommandParser(None)
+        
         sync_scan = " {host} {default}".format(host=host, default=self.sync_scan)
         sync_scan_command = self.default_command() + sync_scan
         if(args):
@@ -431,7 +391,7 @@ class NmapScanTechniques(Nmap):
         # Use the top_port_parser
         output = self.run_command(sync_scan_shlex)
         xml_root = self.get_xml_et(output)
-        self.top_ports = self.filter_top_ports(xml_root)
+        self.top_ports = parser.filter_top_ports(xml_root)
         return self.top_ports
 
     def nmap_tcp_scan(self, host, args=None):
@@ -440,6 +400,8 @@ class NmapScanTechniques(Nmap):
 
         @cmd nmap -sT 192.168.178.1
         """
+        parser  = NmapCommandParser(None)
+         
         if(args):
             assert(isinstance(args, str)), "Expected string got {0} instead".format(type(args))
             
@@ -452,7 +414,7 @@ class NmapScanTechniques(Nmap):
         # Use the top_port_parser
         output = self.run_command(tcp_scan_shlex)
         xml_root = self.get_xml_et(output)
-        tcp_results = self.filter_top_ports(xml_root)
+        tcp_results = parser.filter_top_ports(xml_root)
         return tcp_results
 
     def nmap_ping_scan(self, host, args=None):
@@ -515,6 +477,8 @@ class NmapHostDiscovery(Nmap):
 
         @cmd nmap -Pn 192.168.178.1
         """
+        parser  = NmapCommandParser(None)
+        
         if(args):
             assert(isinstance(args, str)), "Expected string got {0} instead".format(type(args))
             
@@ -527,7 +491,7 @@ class NmapHostDiscovery(Nmap):
         # Use the top_port_parser
         output = self.run_command(scan_shlex)
         xml_root = self.get_xml_et(output)
-        tcp_results = self.filter_top_ports(xml_root)
+        tcp_results = parser.filter_top_ports(xml_root)
         return tcp_results
         
     def nmap_no_portscan(self, host, args=None):
@@ -573,7 +537,7 @@ class NmapHostDiscovery(Nmap):
         # Use the top_port_parser
         output = self.run_command(scan_shlex)
         xml_root = self.get_xml_et(output)
-        tcp_results = self.filter_top_ports(xml_root)
+        tcp_results = parser.filter_top_ports(xml_root)
         return tcp_results
         
     def nmap_disable_dns(self, host, args=None):
@@ -596,7 +560,7 @@ class NmapHostDiscovery(Nmap):
         # Use the top_port_parser
         output = self.run_command(scan_shlex)
         xml_root = self.get_xml_et(output)
-        tcp_results = self.filter_top_ports(xml_root)
+        tcp_results = parser.filter_top_ports(xml_root)
         return tcp_results
         
 if __name__=="__main__":
@@ -605,5 +569,5 @@ if __name__=="__main__":
     args = parser.parse_args()
 
     nmap = Nmap()
-    result = nmap.nmap_version_detection(args.d)
+    result = nmap.nmap_dns_brute_script(args.d)
     print(json.dumps(result, indent=4, sort_keys=True))

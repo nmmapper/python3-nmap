@@ -226,7 +226,7 @@ The following nmaps commands have been added to the following scripts
 
  - [Readthedocs](https://nmap.readthedocs.io/)
 
-## TODO
+## Supporting the nmap host discovery
 Added Nmap Host discovery techniques
 
  - Only port scan    (-Pn)
