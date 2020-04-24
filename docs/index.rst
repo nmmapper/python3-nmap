@@ -217,7 +217,7 @@ Nmap Scanning Techniques
 
  `theHarvester online <https://www.nmmapper.com/kalitools/theharvester/email-harvester-tool/online/>`_
 
-  `Become a patreon <https://www.patreon.com/nmmapper>`_
+ `Become a patreon <https://www.patreon.com/nmmapper>`_
 
 ==================
 Indices and tables

@@ -68,7 +68,6 @@ def get_nmap_version():
     else:
         return output.decode('utf8').strip()
 
-
 if __name__ == "__main__":
     p = get_nmap_path()
     v = get_nmap_version()

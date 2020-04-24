@@ -4,8 +4,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="python3-nmap", # Replace with your own username
-    version="1.4.1",
+    name="python3-nmap", 
+    version="1.4.2",
     author="Wangolo Joel",
     author_email="info@nmmapper.com",
     description="Python3-nmap converts Nmap commands into python3 methods making it very easy to use nmap in any of your python pentesting projects",
@@ -30,5 +30,5 @@ setuptools.setup(
     ],
     python_requires='>=3.6',
     setup_requires=['wheel'],
-    install_requires=["requests", "sphinx", 'sphinx_rtd_theme'],
+    install_requires=['requests', 'sphinx', 'sphinx_rtd_theme', 'simplejson'],
 )

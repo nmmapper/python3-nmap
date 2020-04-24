@@ -1,6 +1,7 @@
 
 
 
+
 # python3-nmap
 A python 3  library which helps in using nmap port scanner. The way this tools works is by defining each nmap command into a python function making it very easy to use sophisticated nmap commands in other python scripts.
 For example in nmap if you want to scan for common ports you would to something like this
@@ -218,9 +219,29 @@ The following nmaps commands have been added to the following scripts
    ```
    
  - nmap_idle_scan
+ ```python
+    import nmap3
+    nmap = nmap3.NmapScanTechniques()
+    result = nmap.nmap_idle_scan("192.168.178.1")
+ ```
  - nmap_ping_scan
+ ```python
+    import nmap3
+    nmap = nmap3.NmapScanTechniques()
+    result = nmap.nmap_ping_scan("192.168.178.1")
+ ```
  - nmap_syn_scan
+ ```python
+    import nmap3
+    nmap = nmap3.NmapScanTechniques()
+    result = nmap.nmap_syn_scan("192.168.178.1")
+ ```
  - nmap_tcp_scan
+ ```python
+    import nmap3
+    nmap = nmap3.NmapScanTechniques()
+    result = nmap.nmap_tcp_scan("192.168.178.1")
+ ```
 
 ## # Documentation
 
@@ -241,9 +262,8 @@ NmapHostDiscovery
  -  `def nmap_arp_discovery(self, host, args=None):`
  -  `def nmap_disable_dns(self, host, args=None):`
 
-## Upcoming fixes
-There are still many things that need to be cleaned and fixed in this 
-For example when a user scans and entire subnet.  Also there is a need to return even the IP of the host that has been scanned.
+## Pull requests and Issues
+Feel free to open up a pull request or open an issue so we can fix it.
 
 ## Cross-Selling
 * [Ethical-tools](https://ethicaltools.gitbook.io/subdomainfinder/)

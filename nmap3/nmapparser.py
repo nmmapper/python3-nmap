@@ -26,8 +26,7 @@ import shlex
 import subprocess
 import sys
 from xml.etree import ElementTree as ET
-#from nmap3.utils import get_nmap_path
-from utils import get_nmap_path
+from nmap3.utils import get_nmap_path # from utils import get_nmap_path
 
 class NmapCommandParser(object):
     """
@@ -302,3 +301,65 @@ class NmapCommandParser(object):
             raise(e)
         else:
             return port_result_dict
+    
+    def version_parser(self, xmlroot):
+        """
+        Parse version detected
+        """
+        service_version = []
+
+        host = xmlroot.find("host")
+        if(host):
+            ports  = host.find("ports")
+            port_service = None
+
+            if(ports):
+                port_service = ports.findall("port")
+
+            if(port_service):
+                for port in port_service:
+                    service = {}
+
+                    service["protocol"]=port.attrib.get("protocol")
+                    service["port"]=port.attrib.get("portid")
+
+                    if(port.find("state")):
+                        for s in port.find("state").attrib:
+                            service[s]=port.find("state").attrib.get(s)
+
+                    if(port.find("service")):
+                        service["service"]=port.find("service").attrib
+
+                        for cp in port.find("service").findall("cpe"):
+                            cpe_list = []
+                            cpe_list.append({"cpe":cp.text})
+                            service["cpe"]=cpe_list
+
+                    service_version.append(service)
+        return service_version
+    
+    def os_identifier_parser(self, xmlroot):
+        """
+        Parser for identified os
+        """
+        try:
+            os_identified = []
+
+            host = xmlroot.find("host")
+            if(host):
+                os = host.find("os")
+
+                if(host):
+                    for match in os.findall("osmatch"):
+                        attrib = match.attrib
+
+                        for osclass in match.findall("osclass"):
+                            attrib["osclass"]=osclass.attrib
+
+                            for cpe in osclass.findall("cpe"):
+                                attrib["cpe"]=cpe.text
+                        os_identified.append(attrib)
+        except Exception as e:
+            raise(e)
+        else:
+            return os_identified
