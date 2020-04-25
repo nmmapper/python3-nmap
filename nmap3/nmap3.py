@@ -25,11 +25,11 @@ import re
 import shlex
 import subprocess
 import sys
-from xml.etree import ElementTree as ET
 from nmap3.utils import get_nmap_path # from utils import get_nmap_path
 import simplejson as json
 import argparse
 from nmap3.nmapparser import NmapCommandParser #from nmapparser import NmapCommandParser
+from xml.etree import ElementTree as ET
 
 __author__ = 'Wangolo Joel (info@nmapper.com)'
 __version__ = '0.1.1'
@@ -278,6 +278,7 @@ class NmapScanTechniques(Nmap):
         self.fin_scan = "-sF"
         self.ping_scan = "-sP"
         self.idle_scan = "-sL"
+        self.udp_scan = "-sU"
 
     def nmap_fin_scan(self, host, args=None):
         """
@@ -337,6 +338,29 @@ class NmapScanTechniques(Nmap):
             tcp_scan_command += " {0}".format(args)
         tcp_scan_shlex = shlex.split(tcp_scan_command) # prepare it
 
+        # Use the top_port_parser
+        output = self.run_command(tcp_scan_shlex)
+        xml_root = self.get_xml_et(output)
+        tcp_results = parser.filter_top_ports(xml_root)
+        return tcp_results
+        
+    def nmap_udp_scan(self, host, args=None):
+        """
+        Scan host using the nmap tcp connect
+
+        @cmd nmap -sU 192.168.178.1
+        """
+        parser  = NmapCommandParser(None)
+
+        if(args):
+            assert(isinstance(args, str)), "Expected string got {0} instead".format(type(args))
+
+        tcp_scan = " {host} {default}".format(host=host, default=self.udp_scan)
+        tcp_scan_command = self.default_command() + tcp_scan
+        if(args):
+            tcp_scan_command += " {0}".format(args)
+        tcp_scan_shlex = shlex.split(tcp_scan_command) # prepare it
+        
         # Use the top_port_parser
         output = self.run_command(tcp_scan_shlex)
         xml_root = self.get_xml_et(output)
@@ -494,6 +518,6 @@ if __name__=="__main__":
     parser.add_argument('-d', '--d', help='Help', required=True)
     args = parser.parse_args()
 
-    nmap = Nmap()
-    result = nmap.nmap_os_detection(args.d)
+    nmap = NmapScanTechniques()
+    result = nmap.nmap_udp_scan(args.d)
     print(json.dumps(result, indent=4, sort_keys=True))

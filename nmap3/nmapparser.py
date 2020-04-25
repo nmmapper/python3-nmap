@@ -278,6 +278,7 @@ class NmapCommandParser(object):
                 
                 for port in ports:
                     open_ports = {}
+                    open_ports["host"]=address
                     for key in port.attrib:
                         open_ports[key]=port.attrib.get(key)
                         
