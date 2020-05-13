@@ -18,7 +18,7 @@ Home page
 
 Rationale
 =========
-There is python-nmap projects out there hosted on bitbucket, which is the basic of our `online port scanner <https://www.nmmapper.com/st/networkmapper/nmap/online-port-scanning/>`_ at `Nmmapper <https://www.nmmapper.com>`_ But we wanted to extend our `online port scanner <https://www.nmmapper.com/st/networkmapper/nmap/online-port-scanning/>`_  with nmap features like running nmap scripts online. The existing projects does it very well, in fact we used the existing python-nmap project to run nmap's dns-brute script on our `subdomain finder tool <https://www.nmmapper.com/sys/tools/subdomainfinder/>`_
+There is python-nmap projects out there hosted on bitbucket, which is the basic of our `online port scanner <https://www.nmmapper.com/st/networkmapper/nmap/online-port-scanning/>`_ at Nmmapper  But we wanted to extend our online port scanner   with nmap features like running nmap scripts online. The existing projects does it very well, in fact we used the existing python-nmap project to run nmap's dns-brute script on our `subdomain finder tool <https://www.nmmapper.com/sys/tools/subdomainfinder/>`_
 . 
 
 But we wanted something that defines each nmap command and  each nmap script as a python3 function that we can call like calling python3 function. for example
@@ -207,6 +207,58 @@ Nmap Scanning Techniques
     import nmap3
     nmap = nmap3.NmapScanTechniques()
     results = nmap.nmap_idle_scan()
+
+Nmap is a large tool, as you can see python3-nmap provides only things what you could say commonly used nmap features.
+
+**NmapHostDiscovery**
+
+***def nmap_portscan_only(self, host, args=None)***
+
+.. code-block:: python
+    import nmap3
+    nmap = nmapp.NmapHostDiscovery()
+    results = nmap.nmap_portscan_only("your-host")
+ 
+**def nmap_no_portscan(self, host, args=None):**
+
+.. code-block:: python
+    :linenos:
+
+    import nmap3
+    nmap = nmapp.NmapHostDiscovery()
+    results = nmap.nmap_no_portscan("your-host")
+
+
+**def nmap_arp_discovery(self, host, args=None):**
+
+.. code-block:: python
+    :linenos:
+
+    import nmap3
+    nmap = nmapp.NmapHostDiscovery()
+    results = nmap.nmap_arp_discovery("your-host")
+
+
+**def nmap_disable_dns(self, host, args=None):**
+
+.. code-block:: python
+    :linenos:
+
+    import nmap3
+    nmap = nmapp.NmapHostDiscovery()
+    results = nmap.nmap_disable_dns("your-host")
+ 
+**Using custom nmap command line arguments.**
+
+As we said, the script defines each set of nmap command as python function/methods. You can also pass arguments to those methods/function thus extending your capabilities for example.Let's say we want to scan top ports but also perform version detection .
+
+.. code-block:: python
+   :linenos:
+
+    import nmap3
+    nmap = nmap3.Namp()
+    results = nmap3.scan_top_ports("host", args="-sV")
+
 
 **Cross Reading**
  `Wappalyzer online <https://www.nmmapper.com/st/cms-detection/wappalyzer-online/>`_
