@@ -336,3 +336,13 @@ Let's say we want to scan top ports but also perform version detection .
    nmap = nmap3.Namp()
    results = nmap3.scan_top_ports("host", args="-sV")
 ```
+
+## Cross-Selling
+* [Ethical-tools](https://ethicaltools.gitbook.io/subdomainfinder/)
+* [Wappalyzer online](https://www.nmmapper.com/st/cms-detection/wappalyzer-online/)
+* [Whatweb online](https://www.nmmapper.com/tools/cms-detection/whatweb-online/WhatWeb/)
+* [Raccoon By Offensive security](https://www.nmmapper.com/tools/reconnaissance-tools/raccoon-vulnerability-scanning/Raccoon%20tool/)
+* [Detect WAF](https://www.nmmapper.com/tools/reconnaissance-tools/waf/web-application-firewall-detector/)
+* [Dnsdumpster](https://dnsdumpster.readthedocs.io/)
+* [Become a patreon](https://www.patreon.com/nmmapper)
+* [Online port scanner](https://www.nmmapper.com/st/networkmapper/nmap/online-port-scanning/)
