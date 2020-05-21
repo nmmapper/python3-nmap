@@ -212,14 +212,15 @@ class NmapCommandParser(object):
                 if(first_table):
                     final_result_table = first_table.findall("table")
                 
-                for table in final_result_table:
-                    script_results = dict()
-                    elem = table.findall("elem")
-                    
-                    if(len(elem) >= 2):
-                        script_results[elem[0].attrib["key"]] = elem[0].text
-                        script_results[elem[1].attrib["key"]] = elem[1].text
-                        subdomains_list.append(script_results)
+                if(final_result_table):
+                    for table in final_result_table:
+                        script_results = dict()
+                        elem = table.findall("elem")
+                        
+                        if(len(elem) >= 2):
+                            script_results[elem[0].attrib["key"]] = elem[0].text
+                            script_results[elem[1].attrib["key"]] = elem[1].text
+                            subdomains_list.append(script_results)
 
         except Exception as e:
             raise(e)
