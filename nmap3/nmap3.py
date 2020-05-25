@@ -144,9 +144,9 @@ class Nmap(object):
         services = self.parser.version_parser(xml_root)
         return services
 
-    def nmap_stealth_scan(self, host, arg="-sA", args=None):
+    def nmap_stealth_scan(self, host, arg="-Pn -sZ", args=None):
         """
-        nmap -oX - nmmapper.com -sA
+        nmap -oX - nmmapper.com -Pn -sZ
         """
         # TODO
         self.host = host
