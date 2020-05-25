@@ -144,6 +144,8 @@ class Nmap(object):
         services = self.parser.version_parser(xml_root)
         return services
 
+# Using of basic options for stealth scan
+
     def nmap_stealth_scan(self, host, arg="-Pn -sZ", args=None):
         """
         nmap -oX - nmmapper.com -Pn -sZ
