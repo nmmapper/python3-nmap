@@ -144,9 +144,11 @@ class Nmap(object):
         services = self.parser.version_parser(xml_root)
         return services
 
-    def nmap_stealth_scan(self, host, arg="-sA", args=None):
+# Using of basic options for stealth scan
+
+    def nmap_stealth_scan(self, host, arg="-Pn -sZ", args=None):
         """
-        nmap -oX - nmmapper.com -sA
+        nmap -oX - nmmapper.com -Pn -sZ
         """
         # TODO
         self.host = host
@@ -471,14 +473,14 @@ class NmapHostDiscovery(Nmap):
         """
         Scan host using the nmap tcp connect
 
-        @cmd nmap -n 192.168.178.1
+        @cmd nmap -PR 192.168.178.1
         """
         parser  = NmapCommandParser(None)
 
         if(args):
             assert(isinstance(args, str)), "Expected string got {0} instead".format(type(args))
 
-        scancommand = " {host} {default}".format(host=host, default=self.disable_dns)
+        scancommand = " {host} {default}".format(host=host, default=self.arp_discovery)
         scan_command = self.default_command() + scancommand
         if(args):
             scan_command += " {0}".format(args)
@@ -494,14 +496,14 @@ class NmapHostDiscovery(Nmap):
         """
         Scan host using the nmap tcp connect
 
-        @cmd nmap -PR 192.168.178.1
+        @cmd nmap -n 192.168.178.1
         """
         parser  = NmapCommandParser(None)
 
         if(args):
             assert(isinstance(args, str)), "Expected string got {0} instead".format(type(args))
 
-        scancommand = " {host} {default}".format(host=host, default=self.arp_discovery)
+        scancommand = " {host} {default}".format(host=host, default=self.disable_dns)
         scan_command = self.default_command() + scancommand
         if(args):
             scan_command += " {0}".format(args)
