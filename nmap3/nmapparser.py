@@ -26,7 +26,7 @@ import shlex
 import subprocess
 import sys
 from xml.etree import ElementTree as ET
-from nmap3.utils import get_nmap_path # from utils import get_nmap_path
+from nmap3.utils import get_nmap_path 
 
 class NmapCommandParser(object):
     """
@@ -293,6 +293,9 @@ class NmapCommandParser(object):
                     port_results.append(open_ports)
                 port_result_dict[address]=port_results
                 
+                if(hosts.find("os")): # Checks if we have os may have been passed as args
+                    port_result_dict["os"]=self.os_identifier_parser(xmlroot)
+                    
             runstats = xmlroot.find("runstats")
             if(runstats):
                 if(runstats.find("finished") != None):
@@ -351,7 +354,7 @@ class NmapCommandParser(object):
             if(host):
                 os = host.find("os")
 
-                if(host):
+                if(os):
                     for match in os.findall("osmatch"):
                         attrib = match.attrib
 
@@ -365,3 +368,4 @@ class NmapCommandParser(object):
             raise(e)
         else:
             return os_identified
+    

@@ -25,11 +25,13 @@ import re
 import shlex
 import subprocess
 import sys
-from nmap3.utils import get_nmap_path # from utils import get_nmap_path
+from nmap3.utils import get_nmap_path 
+from utils import get_nmap_path
 import simplejson as json
 import argparse
-from nmap3.nmapparser import NmapCommandParser #from nmapparser import NmapCommandParser
+from nmap3.nmapparser import NmapCommandParser
 from xml.etree import ElementTree as ET
+from nmap3.exceptions import NmapNotInstalledError
 
 __author__ = 'Wangolo Joel (info@nmapper.com)'
 __version__ = '0.1.1'
@@ -215,16 +217,19 @@ class Nmap(object):
 
         @param: cmd--> the command we want run eg /usr/bin/nmap -oX -  nmmapper.com --top-ports 10
         """
-        sub_proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        try:
-            output, errs = sub_proc.communicate()
-        except Exception as e:
-            sub_proc.kill()
-            raise(e)
+        if(os.path.exists(self.nmaptool)):
+            sub_proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+            try:
+                output, errs = sub_proc.communicate()
+            except Exception as e:
+                sub_proc.kill()
+                raise(e)
+            else:
+                # Response is bytes so decode the output and return
+                return output.decode('utf8').strip()
         else:
-            # Response is bytes so decode the output and return
-            return output.decode('utf8').strip()
-
+            raise NmapNotInstalledError()
+            
     def get_xml_et(self, command_output):
         """
         @ return xml ET
@@ -285,7 +290,6 @@ class NmapScanTechniques(Nmap):
                 xml_root = self.get_xml_et(output)
 
         return xml_root
-        
 
 
     def nmap_fin_scan(self, target, args=None):
@@ -467,6 +471,7 @@ if __name__=="__main__":
     parser.add_argument('-d', '--d', help='Help', required=True)
     args = parser.parse_args()
 
-    nmap = NmapScanTechniques()
-    result = nmap.nmap_udp_scan(args.d)
+    nmap = NmapHostDiscovery()
+    result = nmap.nmap_portscan_only(args.d, args="-O --osscan-guess -p 22")
+    #result = nmap.nmap_portscan_only(args.d)
     print(json.dumps(result, indent=4, sort_keys=True))
