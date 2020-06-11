@@ -25,17 +25,17 @@ import re
 import shlex
 import subprocess
 import sys
-from nmap3.utils import get_nmap_path 
-from utils import get_nmap_path
+from nmap3.utils import get_nmap_path
 import simplejson as json
 import argparse
 from nmap3.nmapparser import NmapCommandParser
 from xml.etree import ElementTree as ET
-from nmap3.exceptions import NmapNotInstalledError
+from xml.etree.ElementTree import ParseError
+from nmap3.exceptions import NmapNotInstalledError, NmapXMLParserError
 
 __author__ = 'Wangolo Joel (info@nmapper.com)'
-__version__ = '0.1.1'
-__last_modification__ = '2020/04/24'
+__version__ = '1.4.7'
+__last_modification__ = '2020/06/11'
 
 class Nmap(object):
     """
@@ -154,17 +154,16 @@ class Nmap(object):
         services = self.parser.version_parser(xml_root)
         return services
 
-# Using of basic options for stealth scan
+    # Using of basic options for stealth scan
 
     def nmap_stealth_scan(self, target, arg="-Pn -sZ", args=None):
         """
         nmap -oX - nmmapper.com -Pn -sZ
         """
-        # TODO
-
         xml_root = self.scan_command(target=target, arg=arg, args=args)
-
-
+        self.top_ports = self.parser.filter_stealth_scan(xml_root)
+        return self.top_ports
+        
     def nmap_detect_firewall(self, target, arg="-sA", args=None): # requires root
         """
         nmap -oX - nmmapper.com -sA
@@ -234,8 +233,11 @@ class Nmap(object):
         """
         @ return xml ET
         """
-        return ET.fromstring(command_output)
-
+        try:
+            return ET.fromstring(command_output)
+        except xml.etree.ElementTree.ParseError:
+            raise NmapXMLParserError()
+            
 class NmapScanTechniques(Nmap):
     """
     Extends Nmap to include nmap commands
@@ -471,7 +473,6 @@ if __name__=="__main__":
     parser.add_argument('-d', '--d', help='Help', required=True)
     args = parser.parse_args()
 
-    nmap = NmapHostDiscovery()
-    result = nmap.nmap_portscan_only(args.d, args="-O --osscan-guess -p 22")
-    #result = nmap.nmap_portscan_only(args.d)
+    nmap = Nmap()
+    result = nmap.nmap_stealth_scan(args.d)
     print(json.dumps(result, indent=4, sort_keys=True))

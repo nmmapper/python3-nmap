@@ -307,6 +307,49 @@ class NmapCommandParser(object):
         else:
             return port_result_dict
     
+    def filter_stealth_scan(self, xmlroot):
+        """
+        Parses the results from a stealth scan
+        """
+        try:
+            port_result_dict = {}
+            
+            scanned_host = xmlroot.findall("host")
+            stats = xmlroot.attrib
+            
+            for hosts in scanned_host:
+                address = hosts.find("address").get("addr")
+                
+                ports = hosts.find("ports").findall("extraports")
+                port_results =[]
+                
+                for port in ports:
+                    open_ports = {}
+                    open_ports["host"]=address
+                    for key in port.attrib:
+                        open_ports[key]=port.attrib.get(key)
+                    
+                    if(port.find("extrareasons") != None):
+                        for extra in port.findall("extrareasons"):
+                            open_ports["extrareasons"]=extra.attrib 
+                            
+                    port_results.append(open_ports)
+                port_result_dict[address]=port_results
+                
+                if(hosts.find("os")): # Checks if we have os may have been passed as args
+                    port_result_dict["os"]=self.os_identifier_parser(xmlroot)
+                    
+            runstats = xmlroot.find("runstats")
+            if(runstats):
+                if(runstats.find("finished") != None):
+                    port_result_dict["runtime"]=runstats.find("finished").attrib
+            port_result_dict["stats"]=stats
+            
+        except Exception as e:
+            raise(e)
+        else:
+            return port_result_dict
+    
     def version_parser(self, xmlroot):
         """
         Parse version detected

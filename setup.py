@@ -19,7 +19,6 @@ setuptools.setup(
         'Source': 'https://github.com/wangoloj/python3-nmap',
         'Subdomain finder': 'https://www.nmmapper.com/sys/tools/subdomainfinder/',
         'theHarvester online': 'https://www.nmmapper.com/kalitools/theharvester/email-harvester-tool/online/',
-        'Helpdesk': 'https://www.aquariumdesk.com/',
         'Crosselling': 'https://www.byogyo.com/',
     },
     packages=setuptools.find_packages(),
