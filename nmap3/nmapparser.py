@@ -55,7 +55,7 @@ class NmapCommandParser(object):
             for host in hosts:
                 attrib = dict()
 
-                if host.find("status" is not None:
+                if host.find("status") is not None:
                     attrib = host.find("status").attrib
 
                 if host.find("address") is not None:
