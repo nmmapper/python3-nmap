@@ -64,6 +64,28 @@ class Nmap(object):
         """
         return self.default_args.format(nmap=self.nmaptool, outarg="-oX")
 
+    def nmap_version(self):
+        """
+        Returns nmap version and build details
+        """
+        # nmap version output is not available in XML format (eg. -oX -)
+        output = self.run_command([self.nmaptool, '--version'])
+        version_data = {}
+        for line in output.splitlines():
+            if line.startswith('Nmap version '):
+                version_string = line.split(' ')[2]
+                version_data['nmap'] = tuple([int(_) for _ in version_string.split('.')])
+            elif line.startswith('Compiled with:'):
+                compiled_with = line.split(':')[1].strip()
+                version_data['compiled_with'] = tuple(compiled_with.split(' '))
+            elif line.startswith('Compiled without:'):
+                compiled_without = line.split(':')[1].strip()
+                version_data['compiled_without'] = tuple(compiled_without.split(' '))
+            elif line.startswith('Available nsock engines:'):
+                nsock_engines = line.split(':')[1].strip()
+                version_data['nsock_engines'] = tuple(nsock_engines.split(' '))
+        return version_data
+
 # Unique method for repetitive tasks - Use of 'target' variable instead of 'host' or 'subnet' - no need to make difference between 2 strings that are used for the same purpose
     def scan_command(self, target, arg, args):
         self.target == target
