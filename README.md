@@ -213,6 +213,12 @@ version_result = nmap.nmap_version_detection("your-host.com")
 ### Nmap commands available
 The following nmaps commands have been added to the following scripts
 
+ - get Nmap version details
+   ```python
+   import nmap3
+   nmap = nmap3.Nmap()
+   results = nmap.nmap_version()
+   ```
  - Nmap top port scan
    ```python
    import nmap3
