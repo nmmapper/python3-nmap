@@ -54,11 +54,11 @@ class NmapCommandParser(object):
             hosts = xml_root.findall("host")
             for host in hosts:
                 attrib = dict()
-                
-                if(host.find("status") != None):
+
+                if host.find("status" is not None:
                     attrib = host.find("status").attrib
-          
-                if(host.find("address") != None):
+
+                if host.find("address") is not None:
                     for attr in host.find("address").attrib:
                         attrib[attr]=host.find("address").attrib.get(attr)
                         
@@ -86,12 +86,12 @@ class NmapCommandParser(object):
                 attrib = host.find("address").attrib
                 ports = []
                 
-                if(host.find("hostnames")):
+                if host.find("hostnames") is not None:
                     for hn in host.find("hostnames").findall("hostname"):
                         attrib["hostname"]=hn.attrib.get("name")
                         attrib["ptr"]=hn.attrib.get("type")
                 
-                if host.find("ports"):
+                if host.find("ports") is not None:
                     for port in host.find("ports").findall("port"):
                         port_attrib = port.attrib
                         ports.append(
@@ -132,7 +132,7 @@ class NmapCommandParser(object):
                         address.append(addr.attrib)
                     host_ping_status["addresses"]=address
                     
-                    if(host.find("hostnames")):
+                    if host.find("hostnames") is not None:
                         for host_n in host.find("hostnames").findall("hostname"):
                             hostname.append(host_n.attrib)
                     host_ping_status["hostname"]=hostname
@@ -154,7 +154,7 @@ class NmapCommandParser(object):
             self.xml_root == xml_root
             host = xml_root.find("host")
             
-            if(host):
+            if host is not None:
                 address = []
                 hostname = []
                 ports = []
@@ -163,7 +163,7 @@ class NmapCommandParser(object):
                     address.append(addr.attrib)
                 idle_scan["addresses"]=address
                 
-                if(host.find("hostnames")):
+                if host.find("hostnames") is not None:
                     for host_n in host.find("hostnames").findall("hostname"):
                         hostname.append(host_n.attrib)
                 idle_scan["hostname"]=hostname
@@ -171,14 +171,14 @@ class NmapCommandParser(object):
                 port = host.find("ports")
                 port_dict = dict()
                 
-                if(port):
+                if port is not None:
                     for open_ports in port.findall("port"):
                         port_dict = open_ports.attrib
                         
-                        if(open_ports.find('state')):
+                        if open_ports.find('state') is not None:
                             port_dict['state']=open_ports.find('state').attrib
                             
-                        if(open_ports.find('service')):
+                        if open_ports.find('service') is not None:
                             port_dict['service']=open_ports.find('service').attrib
                             
                 idle_scan["ports"]=port_dict
@@ -196,23 +196,23 @@ class NmapCommandParser(object):
             subdomains_list = []
             
             scanned_host = xmlroot.find("host")
-            if(scanned_host):
+            if scanned_host is not None:
                 hostscript = scanned_host.find("hostscript")
                 
                 script = None
                 first_table = None
                 final_result_table = None
                 
-                if(hostscript):
+                if hostscript is not None:
                     script = hostscript.find("script")
                     
-                if(hostscript):
+                if hostscript is not None:
                     first_table = script.find("table")
                     
-                if(first_table):
+                if first_table is not None:
                     final_result_table = first_table.findall("table")
                 
-                if(final_result_table):
+                if final_result_table is not None:
                     for table in final_result_table:
                         script_results = dict()
                         elem = table.findall("elem")
@@ -241,7 +241,7 @@ class NmapCommandParser(object):
         for host in all_hosts:
             
             host_record = {}
-            if(host.find("status") != None):
+            if host.find("status") is not None:
                 for key in host.find("status").attrib:
                     host_record[key]=host.find("status").attrib.get(key)
                 
@@ -251,9 +251,9 @@ class NmapCommandParser(object):
             hosts_list.append(host_record)
                 
         runstats = xmlroot.find("runstats")
-        if(runstats):
+        if runstats is not None:
             
-            if(runstats.find("finished") != None):
+            if runstats.find("finished") is not None:
                 result_dicts["runtime"]=runstats.find("finished").attrib
                 result_dicts["status"]=runstats.find("hosts").attrib
         
@@ -283,22 +283,22 @@ class NmapCommandParser(object):
                     for key in port.attrib:
                         open_ports[key]=port.attrib.get(key)
                         
-                    if port.find('state') != None:
+                    if port.find('state') is not None:
                         for key in port.find('state').attrib:
                             open_ports[key]=port.find("state").attrib.get(key)
 
-                    if  port.find("service") != None:
+                    if  port.find("service") is not None:
                         open_ports["service"]=port.find("service").attrib
 
                     port_results.append(open_ports)
                 port_result_dict[address]=port_results
                 
-                if(hosts.find("os")): # Checks if we have os may have been passed as args
+                if hosts.find("os") is not None: # Checks if we have os may have been passed as args
                     port_result_dict["os"]=self.os_identifier_parser(xmlroot)
                     
             runstats = xmlroot.find("runstats")
-            if(runstats):
-                if(runstats.find("finished") != None):
+            if runstats is not None:
+                if runstats.find("finished") is not None:
                     port_result_dict["runtime"]=runstats.find("finished").attrib
             port_result_dict["stats"]=stats
             
@@ -329,19 +329,19 @@ class NmapCommandParser(object):
                     for key in port.attrib:
                         open_ports[key]=port.attrib.get(key)
                     
-                    if(port.find("extrareasons") != None):
+                    if port.find("extrareasons") is not None:
                         for extra in port.findall("extrareasons"):
                             open_ports["extrareasons"]=extra.attrib 
                             
                     port_results.append(open_ports)
                 port_result_dict[address]=port_results
                 
-                if(hosts.find("os")): # Checks if we have os may have been passed as args
+                if hosts.find("os") is not None: # Checks if we have os may have been passed as args
                     port_result_dict["os"]=self.os_identifier_parser(xmlroot)
                     
             runstats = xmlroot.find("runstats")
-            if(runstats):
-                if(runstats.find("finished") != None):
+            if runstats is not None:
+                if runstats.find("finished") is not None:
                     port_result_dict["runtime"]=runstats.find("finished").attrib
             port_result_dict["stats"]=stats
             
@@ -357,25 +357,25 @@ class NmapCommandParser(object):
         service_version = []
 
         host = xmlroot.find("host")
-        if(host):
+        if host is not None:
             ports  = host.find("ports")
             port_service = None
 
-            if(ports):
+            if ports is not None:
                 port_service = ports.findall("port")
 
-            if(port_service):
+            if port_service is not None:
                 for port in port_service:
                     service = {}
 
                     service["protocol"]=port.attrib.get("protocol")
                     service["port"]=port.attrib.get("portid")
 
-                    if(port.find("state")):
+                    if port.find("state") is not None:
                         for s in port.find("state").attrib:
                             service[s]=port.find("state").attrib.get(s)
 
-                    if(port.find("service")):
+                    if port.find("service") is not None:
                         service["service"]=port.find("service").attrib
 
                         for cp in port.find("service").findall("cpe"):
@@ -394,10 +394,10 @@ class NmapCommandParser(object):
             os_identified = []
 
             host = xmlroot.find("host")
-            if(host):
+            if host is not None:
                 os = host.find("os")
 
-                if(os):
+                if os is not None:
                     for match in os.findall("osmatch"):
                         attrib = match.attrib
 
