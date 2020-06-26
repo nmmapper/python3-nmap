@@ -25,20 +25,17 @@ import re
 import shlex
 import subprocess
 import sys
-#from nmap3.utils import get_nmap_path
-from utils import get_nmap_path
+from nmap3.utils import get_nmap_path
 import simplejson as json
 import argparse
-#from nmap3.nmapparser import NmapCommandParser
-from nmapparser import NmapCommandParser
+from nmap3.nmapparser import NmapCommandParser
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import ParseError
-#from nmap3.exceptions import NmapNotInstalledError, NmapXMLParserError
-from exceptions import NmapNotInstalledError, NmapXMLParserError
+from nmap3.exceptions import NmapNotInstalledError, NmapXMLParserError
 
 __author__ = 'Wangolo Joel (info@nmapper.com)'
 __version__ = '1.4.7'
-__last_modification__ = '2020/06/11'
+__last_modification__ = '2020/06/26'
 
 class Nmap(object):
     """
@@ -260,8 +257,8 @@ class Nmap(object):
         @ return xml ET
         """
         try:
-            self.raw_ouput = ET.fromstring(command_output)
-            return self.raw_ouput
+            self.raw_ouput = command_output
+            return ET.fromstring(command_output)
         except xml.etree.ElementTree.ParseError:
             raise NmapXMLParserError()
             
@@ -501,6 +498,5 @@ if __name__=="__main__":
     args = parser.parse_args()
 
     nmap = Nmap()
-    result = nmap.nmap_stealth_scan(args.d)
-    print(result.raw_ouput)
+    result = nmap.scan_top_ports(args.d)
     print(json.dumps(result, indent=4, sort_keys=True))
