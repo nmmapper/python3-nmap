@@ -26,7 +26,6 @@ import shlex
 import subprocess
 import sys
 from xml.etree import ElementTree as ET
-from nmap3.utils import get_nmap_path 
 
 class NmapCommandParser(object):
     """

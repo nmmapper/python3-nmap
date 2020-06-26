@@ -25,13 +25,16 @@ import re
 import shlex
 import subprocess
 import sys
-from nmap3.utils import get_nmap_path
+#from nmap3.utils import get_nmap_path
+from utils import get_nmap_path
 import simplejson as json
 import argparse
-from nmap3.nmapparser import NmapCommandParser
+#from nmap3.nmapparser import NmapCommandParser
+from nmapparser import NmapCommandParser
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import ParseError
-from nmap3.exceptions import NmapNotInstalledError, NmapXMLParserError
+#from nmap3.exceptions import NmapNotInstalledError, NmapXMLParserError
+from exceptions import NmapNotInstalledError, NmapXMLParserError
 
 __author__ = 'Wangolo Joel (info@nmapper.com)'
 __version__ = '1.4.7'
@@ -55,7 +58,8 @@ class Nmap(object):
         self.target = ""
         self.top_ports = dict()
         self.parser  = NmapCommandParser(None)
-
+        self.raw_ouput = None
+        
     def default_command(self):
         """
         Returns the default nmap command
@@ -86,7 +90,7 @@ class Nmap(object):
                 version_data['nsock_engines'] = tuple(nsock_engines.split(' '))
         return version_data
 
-# Unique method for repetitive tasks - Use of 'target' variable instead of 'host' or 'subnet' - no need to make difference between 2 strings that are used for the same purpose
+    # Unique method for repetitive tasks - Use of 'target' variable instead of 'host' or 'subnet' - no need to make difference between 2 strings that are used for the same purpose
     def scan_command(self, target, arg, args):
         self.target == target
         
@@ -256,7 +260,8 @@ class Nmap(object):
         @ return xml ET
         """
         try:
-            return ET.fromstring(command_output)
+            self.raw_ouput = ET.fromstring(command_output)
+            return self.raw_ouput
         except xml.etree.ElementTree.ParseError:
             raise NmapXMLParserError()
             
@@ -285,7 +290,7 @@ class NmapScanTechniques(Nmap):
         self.udp_scan = "-sU"
         self.parser  = NmapCommandParser(None)
 
-# Unique method for repetitive tasks - Use of 'target' variable instead of 'host' or 'subnet' - no need to make difference between 2 strings that are used for the same purpose. Creating a scan template as a switcher
+    # Unique method for repetitive tasks - Use of 'target' variable instead of 'host' or 'subnet' - no need to make difference between 2 strings that are used for the same purpose. Creating a scan template as a switcher
     def scan_command(self, scan_type, target, args):
         def tpl(i):
             scan_template = {
@@ -497,4 +502,5 @@ if __name__=="__main__":
 
     nmap = Nmap()
     result = nmap.nmap_stealth_scan(args.d)
+    print(result.raw_ouput)
     print(json.dumps(result, indent=4, sort_keys=True))
