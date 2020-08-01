@@ -32,10 +32,11 @@ from nmap3.nmapparser import NmapCommandParser
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import ParseError
 from nmap3.exceptions import NmapNotInstalledError, NmapXMLParserError
+import xml
 
 __author__ = 'Wangolo Joel (info@nmapper.com)'
 __version__ = '1.4.7'
-__last_modification__ = '2020/06/26'
+__last_modification__ = '2020/08/01'
 
 class Nmap(object):
     """
@@ -192,7 +193,6 @@ class Nmap(object):
         nmap -oX - nmmapper.com -sA
         @ TODO
         """
-
         xml_root = self.scan_command(target=target, arg=arg, args=args)
 
         # TODO
@@ -202,9 +202,7 @@ class Nmap(object):
         nmap -oX - nmmapper.com -O
         NOTE: Requires root
         """
-        
         xml_root = self.scan_command(target=target, arg=arg, args=args)
-
         os_identified = self.parser.os_identifier_parser(xml_root)
         return os_identified
 
@@ -215,7 +213,6 @@ class Nmap(object):
         """
 
         xml_root = self.scan_command(target=target, arg=arg, args=args)
-
         subnet_discovered = self.parser.parse_nmap_subnetscan(xml_root)
         return subnet_discovered
 
@@ -227,7 +224,6 @@ class Nmap(object):
         NOTE: /usr/bin/nmap  -oX  -  192.168.178.1/24  -sL
         """
         self.target = target
-
         xml_root = self.scan_command(target=target, arg=arg, args=args)
 
         hosts_discovered = self.parser.parse_nmap_listscan(xml_root)
@@ -259,7 +255,7 @@ class Nmap(object):
         try:
             self.raw_ouput = command_output
             return ET.fromstring(command_output)
-        except xml.etree.ElementTree.ParseError:
+        except ParseError:
             raise NmapXMLParserError()
             
 class NmapScanTechniques(Nmap):
