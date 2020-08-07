@@ -309,25 +309,25 @@ NmapHostDiscovery
  -  `def nmap_portscan_only(self, host, args=None)`
  ```python
     import nmap3
-    nmap = nmapp.NmapHostDiscovery()
+    nmap = nmap3.NmapHostDiscovery()
     results = nmap.nmap_portscan_only("your-host")
  ```
  -  `def nmap_no_portscan(self, host, args=None):`
  ```python
     import nmap3
-    nmap = nmapp.NmapHostDiscovery()
+    nmap = nmap3.NmapHostDiscovery()
     results = nmap.nmap_no_portscan("your-host")
  ```
  -  `def nmap_arp_discovery(self, host, args=None):`
   ```python
     import nmap3
-    nmap = nmapp.NmapHostDiscovery()
+    nmap = nmap3.NmapHostDiscovery()
     results = nmap.nmap_arp_discovery("your-host")
  ```
  -  `def nmap_disable_dns(self, host, args=None):`
   ```python
     import nmap3
-    nmap = nmapp.NmapHostDiscovery()
+    nmap = nmap3.NmapHostDiscovery()
     results = nmap.nmap_disable_dns("your-host")
  ```
 
@@ -339,8 +339,8 @@ Let's say we want to scan top ports but also perform version detection .
 
 ```python
    import nmap3
-   nmap = nmap3.Namp()
-   results = nmap3.scan_top_ports("host", args="-sV")
+   nmap = nmap3.Nmap()
+   results = nmap.scan_top_ports("host", args="-sV")
 ```
 
 ## Cross-Selling
