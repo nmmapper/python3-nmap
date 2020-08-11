@@ -353,37 +353,46 @@ class NmapCommandParser(object):
         """
         Parse version detected
         """
-        service_version = []
+        try:
+            service_version = []
+            scanned_host = xmlroot.findall("host")
+            stats = xmlroot.attrib
+            for hosts in scanned_host:
+                address = hosts.find("address").get("addr")
+                ports = hosts.find("ports").findall("port")
+                if hosts is not None:
+                    ports = hosts.find("ports")
+                    port_service = None
+                    
+                    if ports is not None:
+                        port_service = ports.findall("port")
 
-        host = xmlroot.find("host")
-        if host is not None:
-            ports  = host.find("ports")
-            port_service = None
+                    if port_service is not None:
+                        services_result = []
+                        for port in port_service:
+                            service = {}
+                            service["protocol"] = port.attrib.get("protocol")
+                            service["port"] = port.attrib.get("portid")
 
-            if ports is not None:
-                port_service = ports.findall("port")
+                            if port.find("state") is not None:
+                                for s in port.find("state").attrib:
+                                    service[s] = port.find("state").attrib.get(s)
 
-            if port_service is not None:
-                for port in port_service:
-                    service = {}
+                            if port.find("service") is not None:
+                                service["service"] = port.find("service").attrib
 
-                    service["protocol"]=port.attrib.get("protocol")
-                    service["port"]=port.attrib.get("portid")
+                                for cp in port.find("service").findall("cpe"):
+                                    cpe_list = []
+                                    cpe_list.append({"cpe": cp.text})
+                                    service["cpe"] = cpe_list
+                            services_result.append(service)
 
-                    if port.find("state") is not None:
-                        for s in port.find("state").attrib:
-                            service[s]=port.find("state").attrib.get(s)
-
-                    if port.find("service") is not None:
-                        service["service"]=port.find("service").attrib
-
-                        for cp in port.find("service").findall("cpe"):
-                            cpe_list = []
-                            cpe_list.append({"cpe":cp.text})
-                            service["cpe"]=cpe_list
-
-                    service_version.append(service)
-        return service_version
+                    service_version_dict[address] = services_result
+            return service_version_dict
+        except Exception as e:
+            raise(e)
+        else:
+            return port_result_dict
     
     def os_identifier_parser(self, xmlroot):
         """
