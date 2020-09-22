@@ -355,8 +355,10 @@ class NmapCommandParser(object):
         """
         try:
             service_version = []
+            service_version_dict = dict()
             scanned_host = xmlroot.findall("host")
             stats = xmlroot.attrib
+            
             for hosts in scanned_host:
                 address = hosts.find("address").get("addr")
                 ports = hosts.find("ports").findall("port")

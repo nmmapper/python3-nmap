@@ -500,11 +500,17 @@ class NmapHostDiscovery(Nmap):
         tcp_results = self.parser.filter_top_ports(xml_root)
         return tcp_results
 
+class NmapScripts(Nmap):
+    """
+    This will be responsible for the nmap extra scriptin engine
+    """
+    pass
+    
 if __name__=="__main__":
     parser = argparse.ArgumentParser(prog="Python3 nmap")
     parser.add_argument('-d', '--d', help='Help', required=True)
     args = parser.parse_args()
 
     nmap = Nmap()
-    result = nmap.scan_top_ports(args.d)
+    result = nmap.nmap_version_detection(args.d)
     print(json.dumps(result, indent=4, sort_keys=True))
