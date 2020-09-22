@@ -37,6 +37,7 @@ import xml
 __author__ = 'Wangolo Joel (info@nmapper.com)'
 __version__ = '1.4.7'
 __last_modification__ = '2020/08/01'
+OS_TYPE = sys.platform
 
 class Nmap(object):
     """
@@ -65,6 +66,17 @@ class Nmap(object):
         eg nmap -oX -
         """
         return self.default_args.format(nmap=self.nmaptool, outarg="-oX")
+    
+    def default_command_privileged(self):
+        """
+        Commands that require root privileges
+        """
+        if OS_TYPE == 'win32':
+            # Elevate privileges and return nmap command
+            # For windows now is not fully supported so just return the default
+            return self.default_command() 
+        else:
+            return self.default_args.format(nmap="sudo "+self.nmaptool, outarg="-oX")
 
     def nmap_version(self):
         """
