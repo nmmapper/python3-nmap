@@ -1,10 +1,9 @@
-.. python3-nmap documentation master file, created by
-   sphinx-quickstart on Thu Dec  5 12:49:59 2019.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. meta::
+    :description lang=en:
+        Python3-nmap converts Nmap commands into python3 methods making it very easy to use nmap in any of your python pentesting projects 
 
-Welcome to python3-nmap's documentation!
-========================================
+Python3-nmap converts Nmap commands into python3 methods
+========================================================
 
 .. toctree::
    :maxdepth: 2
