@@ -511,6 +511,6 @@ if __name__=="__main__":
     parser.add_argument('-d', '--d', help='Help', required=True)
     args = parser.parse_args()
 
-    nmap = Nmap()
-    result = nmap.nmap_version_detection(args.d)
+    nmap = NmapHostDiscovery()
+    result = nmap.nmap_no_portscan(args.d)
     print(json.dumps(result, indent=4, sort_keys=True))

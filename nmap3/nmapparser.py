@@ -238,15 +238,27 @@ class NmapCommandParser(object):
         # Find all hosts 
         all_hosts = xmlroot.findall("host")
         for host in all_hosts:
-            
             host_record = {}
+            address = []
+            hostnames = []
+            
             if host.find("status") is not None:
                 for key in host.find("status").attrib:
                     host_record[key]=host.find("status").attrib.get(key)
                 
                 for key in host.find("address").attrib:
                     host_record[key]=host.find("address").attrib.get(key)
-                    
+                
+                for key in host.findall("address"):
+                    address.append(key.attrib)
+                host_record["addresses"]=address
+                
+                for hostname in host.find("hostnames"):
+                    for hosts in hostname.findall("hostname"):
+                        hostnames.append(hosts.attrib)
+                        
+                host_record["hostnames"]=hostnames
+                
             hosts_list.append(host_record)
                 
         runstats = xmlroot.find("runstats")
