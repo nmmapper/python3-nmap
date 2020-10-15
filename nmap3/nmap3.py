@@ -126,8 +126,6 @@ class Nmap(object):
 
         This top port requires root previledges
         """
-        parser  = NmapCommandParser(None)
-
         if(default > self.maxport):
             raise ValueError("Port can not be greater than default 65389")
         self.target = target
@@ -149,7 +147,7 @@ class Nmap(object):
 
         # Begin parsing the xml response
         xml_root = self.get_xml_et(output)
-        self.top_ports = parser.filter_top_ports(xml_root)
+        self.top_ports = self.parser.filter_top_ports(xml_root)
         return self.top_ports
 
     def nmap_dns_brute_script(self, target, dns_brute="--script dns-brute.nse"):
@@ -162,7 +160,6 @@ class Nmap(object):
         nmap -oX - nmmapper.com --script dns-brute.nse
         """
         self.target = target
-        parser  = NmapCommandParser(None)
 
         dns_brute_args = "{target}  {default}".format(target=target, default=dns_brute)
 
@@ -174,7 +171,7 @@ class Nmap(object):
 
         # Begin parsing the xml response
         xml_root = self.get_xml_et(output)
-        subdomains = parser.filter_subdomains(xml_root)
+        subdomains = self.parser.filter_subdomains(xml_root)
         return subdomains
 
     def nmap_version_detection(self, target, arg="-sV", args=None):
@@ -466,7 +463,6 @@ class NmapHostDiscovery(Nmap):
         """
         if(args):
             assert(isinstance(args, str)), "Expected string got {0} instead".format(type(args))
-
         xml_root = self.scan_command(self.no_port_scan, target=target, args=args)
 
         tcp_results = self.parser.parse_noportscan(xml_root)

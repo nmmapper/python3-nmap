@@ -253,9 +253,10 @@ class NmapCommandParser(object):
                     address.append(key.attrib)
                 host_record["addresses"]=address
                 
-                for hostname in host.find("hostnames"):
-                    for hosts in hostname.findall("hostname"):
-                        hostnames.append(hosts.attrib)
+                if(host.find("hostnames")):
+                    for hostname in host.find("hostnames"):
+                        for hosts in hostname.findall("hostname"):
+                            hostnames.append(hosts.attrib)
                         
                 host_record["hostnames"]=hostnames
                 
