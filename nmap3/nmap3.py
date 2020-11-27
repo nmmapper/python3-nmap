@@ -31,7 +31,7 @@ import argparse
 from nmap3.nmapparser import NmapCommandParser
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import ParseError
-from nmap3.exceptions import NmapNotInstalledError, NmapXMLParserError
+from nmap3.exceptions import NmapNotInstalledError, NmapXMLParserError, NmapExecutionError
 import xml
 
 __author__ = 'Wangolo Joel (info@nmapper.com)'
@@ -58,6 +58,13 @@ class Nmap(object):
         self.top_ports = dict()
         self.parser  = NmapCommandParser(None)
         self.raw_ouput = None
+        self.as_root = False
+
+    def require_root(self, required=True):
+        """
+        Call this method to add "sudo" in front of nmap call
+        """
+        self.as_root = required
         
     def default_command(self):
         """
@@ -65,6 +72,9 @@ class Nmap(object):
         that will be chained with all others
         eg nmap -oX -
         """
+        if self.as_root:
+            return self.default_command_privileged()
+
         return self.default_args.format(nmap=self.nmaptool, outarg="-oX")
     
     def default_command_privileged(self):
@@ -244,19 +254,23 @@ class Nmap(object):
 
         @param: cmd--> the command we want run eg /usr/bin/nmap -oX -  nmmapper.com --top-ports 10
         """
-        if(os.path.exists(self.nmaptool)):
-            sub_proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        if (os.path.exists(self.nmaptool)):
+            print(cmd)
+            sub_proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             try:
                 output, errs = sub_proc.communicate()
             except Exception as e:
                 sub_proc.kill()
-                raise(e)
+                raise (e)
             else:
+                if 0 != sub_proc.returncode:
+                    raise NmapExecutionError(errs.decode('utf8'))
+
                 # Response is bytes so decode the output and return
                 return output.decode('utf8').strip()
         else:
             raise NmapNotInstalledError()
-            
+
     def get_xml_et(self, command_output):
         """
         @ return xml ET
@@ -330,6 +344,8 @@ class NmapScanTechniques(Nmap):
         @cmd nmap -sF 192.168.178.1
 
         """
+        self.require_root()
+
         xml_root = self.scan_command(self.fin_scan, target=target, args=args)
 
         fin_results = self.parser.parse_nmap_idlescan(xml_root)
@@ -342,6 +358,7 @@ class NmapScanTechniques(Nmap):
 
         @cmd nmap -sS 192.168.178.1
         """
+        self.require_root()
         xml_root = self.scan_command(self.sync_scan, target=target, args=args)
         
         # Use the top_port_parser
@@ -368,9 +385,11 @@ class NmapScanTechniques(Nmap):
 
         @cmd nmap -sU 192.168.178.1
         """
+        self.require_root()
+
         if(args):
             assert(isinstance(args, str)), "Expected string got {0} instead".format(type(args))
-        
+
         xml_root = self.scan_command(self.udp_scan, target=target, args=args)
 
         tcp_results = self.parser.filter_top_ports(xml_root)
