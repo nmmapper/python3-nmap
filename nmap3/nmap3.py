@@ -255,7 +255,6 @@ class Nmap(object):
         @param: cmd--> the command we want run eg /usr/bin/nmap -oX -  nmmapper.com --top-ports 10
         """
         if (os.path.exists(self.nmaptool)):
-            print(cmd)
             sub_proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             try:
                 output, errs = sub_proc.communicate()
