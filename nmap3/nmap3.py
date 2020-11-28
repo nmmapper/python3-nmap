@@ -263,7 +263,7 @@ class Nmap(object):
                 raise (e)
             else:
                 if 0 != sub_proc.returncode:
-                    raise NmapExecutionError(errs.decode('utf8'))
+                    raise NmapExecutionError('Error during command: "' + ' '.join(cmd) + '"\n\n' + errs.decode('utf8'))
 
                 # Response is bytes so decode the output and return
                 return output.decode('utf8').strip()
