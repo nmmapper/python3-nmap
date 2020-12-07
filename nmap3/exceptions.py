@@ -41,4 +41,7 @@ class NmapXMLParserError(Exception):
     def __init__(self, message="Unable to parse xml output"):
         self.message = message 
         super().__init__(message)
-        
+
+class NmapExecutionError(Exception):
+    """Exception raised when en error occurred during nmap call"""
+
