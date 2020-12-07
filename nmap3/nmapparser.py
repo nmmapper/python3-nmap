@@ -94,8 +94,11 @@ class NmapCommandParser(object):
                     for port in host.find("ports").findall("port"):
                         port_attrib = port.attrib
                         ports.append(
-                            {"port":port_attrib.get("portid"), "protocol":port_attrib.get("protocol"),
-                            "state":port.find("state").attrib.get("state")
+                            {
+                                "port": port_attrib.get("portid"),
+                                "protocol": port_attrib.get("protocol"),
+                                "state": port.find("state").attrib.get("state"),
+                                "scripts": self.parse_scripts(port.findall('script')) if port.findall('script') is not None else []
                             }
                         )
                         
@@ -179,6 +182,9 @@ class NmapCommandParser(object):
                             
                         if open_ports.find('service') is not None:
                             port_dict['service']=open_ports.find('service').attrib
+
+                        if port.findall('script') is not None:
+                            open_ports['scripts'] = self.parse_scripts(port.findall('script'))
                             
                 idle_scan["ports"]=port_dict
                 
@@ -299,8 +305,11 @@ class NmapCommandParser(object):
                         for key in port.find('state').attrib:
                             open_ports[key]=port.find("state").attrib.get(key)
 
-                    if  port.find("service") is not None:
+                    if port.find("service") is not None:
                         open_ports["service"]=port.find("service").attrib
+
+                    if port.findall('script') is not None:
+                        open_ports['scripts'] = self.parse_scripts(port.findall('script'))
 
                     port_results.append(open_ports)
                 port_result_dict[address]=port_results
@@ -343,7 +352,10 @@ class NmapCommandParser(object):
                     
                     if port.find("extrareasons") is not None:
                         for extra in port.findall("extrareasons"):
-                            open_ports["extrareasons"]=extra.attrib 
+                            open_ports["extrareasons"]=extra.attrib
+
+                    if port.findall('script') is not None:
+                        open_ports['scripts'] = self.parse_scripts(port.findall('script'))
                             
                     port_results.append(open_ports)
                 port_result_dict[address]=port_results
@@ -400,6 +412,9 @@ class NmapCommandParser(object):
                                     cpe_list = []
                                     cpe_list.append({"cpe": cp.text})
                                     service["cpe"] = cpe_list
+                            if port.findall('script') is not None:
+                                service['scripts'] = self.parse_scripts(port.findall('script'))
+
                             services_result.append(service)
 
                     service_version_dict[address] = services_result
@@ -434,4 +449,56 @@ class NmapCommandParser(object):
             raise(e)
         else:
             return os_identified
-    
+
+    def parse_scripts(self, scripts_xml):
+        scripts = []
+
+        for script_xml in scripts_xml:
+            script_name = script_xml.attrib.get('id')
+            raw_output = script_xml.attrib.get('output')
+
+            data = self.convert_xml_elements(script_xml)
+            if script_xml.findall('table') is not None:
+                tables = script_xml.findall('table')
+                child_data = self.convert_xml_tables(tables)
+                for k in child_data:
+                    if {} != k:
+                        data[k] = child_data[k]
+
+            scripts.append({
+                'name': script_name,
+                'raw': raw_output,
+                'data': data
+            })
+
+        return scripts
+
+    def convert_xml_tables(self, xml_tables):
+        data = {}
+        for xml_table in xml_tables:
+            key = xml_table.attrib.get('key')
+            child_data = self.convert_xml_elements(xml_table)
+            if key is None:
+                if {} != child_data:
+                    a = data.get('children', [])
+                    data['children'] = a + [child_data]
+            else:
+                if xml_table.findall('table') is not None:
+                    data[key] = self.convert_xml_tables(xml_table.findall('table'))
+                if {} != child_data:
+                    a = data.get(key, {})
+                    b = a.get('children', [])
+                    a['children'] = b + [child_data]
+
+        return data
+
+    def convert_xml_elements(self, xml_obj):
+        elements = {}
+        elem_counter = 0
+        for elem in xml_obj.findall('elem'):
+            if None == elem.attrib.get('key'):
+                elements[elem_counter] = elem.text
+            else:
+                elements[elem.attrib.get('key')] = elem.text
+            elem_counter += 1
+        return elements
