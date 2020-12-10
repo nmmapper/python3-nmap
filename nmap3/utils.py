@@ -22,6 +22,7 @@ import shlex
 import subprocess
 import sys
 import re
+import os
 
 __author__ = 'Wangolo Joel (info@nmapper.com)'
 __version__ = '0.1.1'
@@ -68,6 +69,10 @@ def get_nmap_version():
     else:
         return output.decode('utf8').strip()
 
-if __name__ == "__main__":
-    p = get_nmap_path()
-    v = get_nmap_version()
+def user_is_root(func):
+    def wrapper(*args, **kwargs):
+        if(os.geteuid() == 0):
+            return func(*args, **kwargs)
+        else:
+            return {"error":True, "msg":"You must be root to continue!"}
+    return wrapper 

@@ -38,154 +38,6 @@ class NmapCommandParser(object):
         self.xml_et = xml_et
         self.xml_root = None
         
-    def parse_nmap_listscan(self, xml_root):
-        """
-        Performs parsin for nmap listscan xml rests
-        @ return DICT
-        """
-        host_list = []
-        try:
-            
-            if not xml_root:
-                return host_list
-            self.xml_root == xml_root
-            
-            hosts = xml_root.findall("host")
-            for host in hosts:
-                attrib = dict()
-
-                if host.find("status") is not None:
-                    attrib = host.find("status").attrib
-
-                if host.find("address") is not None:
-                    for attr in host.find("address").attrib:
-                        attrib[attr]=host.find("address").attrib.get(attr)
-                        
-                host_list.append(attrib)
-            return host_list
-            
-        except Exception:
-            return host_list
-            
-    def parse_nmap_subnetscan(self, xml_root):
-        """
-        Performs parsin for nmap listscan xml rests
-        @ return DICT
-        """
-        host_list = []
-        try:
-            
-            if not xml_root:
-                return host_list
-            self.xml_root == xml_root
-            
-            hosts = xml_root.findall("host")
-            
-            for host in hosts:
-                attrib = host.find("address").attrib
-                ports = []
-                
-                if host.find("hostnames") is not None:
-                    for hn in host.find("hostnames").findall("hostname"):
-                        attrib["hostname"]=hn.attrib.get("name")
-                        attrib["ptr"]=hn.attrib.get("type")
-                
-                if host.find("ports") is not None:
-                    for port in host.find("ports").findall("port"):
-                        port_attrib = port.attrib
-                        ports.append(
-                            {"port":port_attrib.get("portid"), "protocol":port_attrib.get("protocol"),
-                            "state":port.find("state").attrib.get("state")
-                            }
-                        )
-                        
-                attrib["ports"]=ports
-                
-                host_list.append(attrib)
-            return host_list
-            
-        except Exception as e:
-            raise 
-            return host_list
-        
-    def parse_nmap_pingscan(self, xml_root):
-        """
-        Performs parsing for nmap pingscan xml rests
-        @ return DICT
-        """
-        ping_status_list = []
-        try:
-            
-            if not xml_root:
-                return host_list
-            self.xml_root == xml_root
-            
-            for host in xml_root.findall("host"):
-                host_ping_status = dict()
-                if(host):
-                    host_ping_status = host.find('status').attrib
-                    address = []
-                    hostname = []
-                    
-                    for addr in host.findall("address"):
-                        address.append(addr.attrib)
-                    host_ping_status["addresses"]=address
-                    
-                    if host.find("hostnames") is not None:
-                        for host_n in host.find("hostnames").findall("hostname"):
-                            hostname.append(host_n.attrib)
-                    host_ping_status["hostname"]=hostname
-                ping_status_list.append(host_ping_status)
-            return ping_status_list
-        except Exception as e:
-            raise
-            
-    def parse_nmap_idlescan(self, xml_root):
-        """
-        Performs parsing for nmap idlescan xml rests
-        @ return DICT
-        """
-        idle_scan = dict()
-        try:
-            
-            if not xml_root:
-                return host_list
-            self.xml_root == xml_root
-            host = xml_root.find("host")
-            
-            if host is not None:
-                address = []
-                hostname = []
-                ports = []
-                
-                for addr in host.findall("address"):
-                    address.append(addr.attrib)
-                idle_scan["addresses"]=address
-                
-                if host.find("hostnames") is not None:
-                    for host_n in host.find("hostnames").findall("hostname"):
-                        hostname.append(host_n.attrib)
-                idle_scan["hostname"]=hostname
-                
-                port = host.find("ports")
-                port_dict = dict()
-                
-                if port is not None:
-                    for open_ports in port.findall("port"):
-                        port_dict = open_ports.attrib
-                        
-                        if open_ports.find('state') is not None:
-                            port_dict['state']=open_ports.find('state').attrib
-                            
-                        if open_ports.find('service') is not None:
-                            port_dict['service']=open_ports.find('service').attrib
-                            
-                idle_scan["ports"]=port_dict
-                
-            return idle_scan
-        except Exception as e:
-            raise
-        
     def filter_subdomains(self, xmlroot):
         """
         Given the xmlroot return the all the ports that are open from 
@@ -226,52 +78,6 @@ class NmapCommandParser(object):
         else:
             return subdomains_list
             
-    def parse_noportscan(self, xmlroot):
-        """
-        Given the xmlroot return the all the ports that are open from 
-        that tree
-        """
-        
-        result_dicts = {}
-        hosts_list=[]
-        
-        # Find all hosts 
-        all_hosts = xmlroot.findall("host")
-        for host in all_hosts:
-            host_record = {}
-            address = []
-            hostnames = []
-            
-            if host.find("status") is not None:
-                for key in host.find("status").attrib:
-                    host_record[key]=host.find("status").attrib.get(key)
-                
-                for key in host.find("address").attrib:
-                    host_record[key]=host.find("address").attrib.get(key)
-                
-                for key in host.findall("address"):
-                    address.append(key.attrib)
-                host_record["addresses"]=address
-                
-                if(host.find("hostnames")):
-                    for hostname in host.find("hostnames"):
-                        for hosts in hostname.findall("hostname"):
-                            hostnames.append(hosts.attrib)
-                        
-                host_record["hostnames"]=hostnames
-                
-            hosts_list.append(host_record)
-                
-        runstats = xmlroot.find("runstats")
-        if runstats is not None:
-            
-            if runstats.find("finished") is not None:
-                result_dicts["runtime"]=runstats.find("finished").attrib
-                result_dicts["status"]=runstats.find("hosts").attrib
-        
-        result_dicts["hosts"]=hosts_list
-        return result_dicts 
-    
     def filter_top_ports(self, xmlroot):
         """
         Given the xmlroot return the all the ports that are open from
@@ -285,125 +91,18 @@ class NmapCommandParser(object):
             
             for hosts in scanned_host:
                 address = hosts.find("address").get("addr")
+                port_result_dict[address]={} # A little trick to avoid errors
                 
-                ports = hosts.find("ports").findall("port")
-                port_results =[]
+                port_result_dict[address]["osmatch"]=self.parse_os(hosts)
+                port_result_dict[address]["ports"] = self.parse_ports(hosts)
+                port_result_dict[address]["hostname"] = self.parse_hostnames(hosts)
+                port_result_dict[address]["macaddress"] = self.parse_mac_address(hosts)
+                port_result_dict[address]["state"] = self.get_hostname_state(hosts)
                 
-                for port in ports:
-                    open_ports = {}
-                    open_ports["host"]=address
-                    for key in port.attrib:
-                        open_ports[key]=port.attrib.get(key)
-                        
-                    if port.find('state') is not None:
-                        for key in port.find('state').attrib:
-                            open_ports[key]=port.find("state").attrib.get(key)
-
-                    if  port.find("service") is not None:
-                        open_ports["service"]=port.find("service").attrib
-
-                    port_results.append(open_ports)
-                port_result_dict[address]=port_results
-                
-                if hosts.find("os") is not None: # Checks if we have os may have been passed as args
-                    port_result_dict["os"]=self.os_identifier_parser(xmlroot)
-                    
-            runstats = xmlroot.find("runstats")
-            if runstats is not None:
-                if runstats.find("finished") is not None:
-                    port_result_dict["runtime"]=runstats.find("finished").attrib
             port_result_dict["stats"]=stats
+            port_result_dict["runtime"]=self.parse_runtime(xmlroot)
+            port_result_dict["totals"]=self.total_hosts(xmlroot)
             
-        except Exception as e:
-            raise(e)
-        else:
-            return port_result_dict
-    
-    def filter_stealth_scan(self, xmlroot):
-        """
-        Parses the results from a stealth scan
-        """
-        try:
-            port_result_dict = {}
-            
-            scanned_host = xmlroot.findall("host")
-            stats = xmlroot.attrib
-            
-            for hosts in scanned_host:
-                address = hosts.find("address").get("addr")
-                
-                ports = hosts.find("ports").findall("extraports")
-                port_results =[]
-                
-                for port in ports:
-                    open_ports = {}
-                    open_ports["host"]=address
-                    for key in port.attrib:
-                        open_ports[key]=port.attrib.get(key)
-                    
-                    if port.find("extrareasons") is not None:
-                        for extra in port.findall("extrareasons"):
-                            open_ports["extrareasons"]=extra.attrib 
-                            
-                    port_results.append(open_ports)
-                port_result_dict[address]=port_results
-                
-                if hosts.find("os") is not None: # Checks if we have os may have been passed as args
-                    port_result_dict["os"]=self.os_identifier_parser(xmlroot)
-                    
-            runstats = xmlroot.find("runstats")
-            if runstats is not None:
-                if runstats.find("finished") is not None:
-                    port_result_dict["runtime"]=runstats.find("finished").attrib
-            port_result_dict["stats"]=stats
-            
-        except Exception as e:
-            raise(e)
-        else:
-            return port_result_dict
-    
-    def version_parser(self, xmlroot):
-        """
-        Parse version detected
-        """
-        try:
-            service_version = []
-            service_version_dict = dict()
-            scanned_host = xmlroot.findall("host")
-            stats = xmlroot.attrib
-            
-            for hosts in scanned_host:
-                address = hosts.find("address").get("addr")
-                ports = hosts.find("ports").findall("port")
-                if hosts is not None:
-                    ports = hosts.find("ports")
-                    port_service = None
-                    
-                    if ports is not None:
-                        port_service = ports.findall("port")
-
-                    if port_service is not None:
-                        services_result = []
-                        for port in port_service:
-                            service = {}
-                            service["protocol"] = port.attrib.get("protocol")
-                            service["port"] = port.attrib.get("portid")
-
-                            if port.find("state") is not None:
-                                for s in port.find("state").attrib:
-                                    service[s] = port.find("state").attrib.get(s)
-
-                            if port.find("service") is not None:
-                                service["service"] = port.find("service").attrib
-
-                                for cp in port.find("service").findall("cpe"):
-                                    cpe_list = []
-                                    cpe_list.append({"cpe": cp.text})
-                                    service["cpe"] = cpe_list
-                            services_result.append(service)
-
-                    service_version_dict[address] = services_result
-            return service_version_dict
         except Exception as e:
             raise(e)
         else:
@@ -415,23 +114,121 @@ class NmapCommandParser(object):
         """
         try:
             os_identified = []
-
-            host = xmlroot.find("host")
-            if host is not None:
-                os = host.find("os")
-
-                if os is not None:
-                    for match in os.findall("osmatch"):
-                        attrib = match.attrib
-
-                        for osclass in match.findall("osclass"):
-                            attrib["osclass"]=osclass.attrib
-
-                            for cpe in osclass.findall("cpe"):
-                                attrib["cpe"]=cpe.text
-                        os_identified.append(attrib)
+            os_dict = {}
+            hosts = xmlroot.findall("host")
+            stats = xmlroot.attrib
+            
+            for host in hosts:
+                address = host.find("address").get("addr")
+                os_dict[address]={}
+                
+                os_dict[address]["osmatch"]=self.parse_os(host)
+                os_dict[address]["ports"] = self.parse_ports(host)
+                os_dict[address]["hostname"] = self.parse_hostnames(host)
+                os_dict[address]["macaddress"] = self.parse_mac_address(host)
+            
+            os_dict["runtime"]=self.parse_runtime(xmlroot)
+            os_dict["stats"]=stats
+            return os_dict
+            
         except Exception as e:
             raise(e)
         else:
             return os_identified
     
+    def parse_os(self, os_results):
+        """
+        parses os results
+        """
+        os = os_results.find("os")
+        os_list = []
+        
+        if os is not None:
+            for match in os.findall("osmatch"):
+                attrib = match.attrib
+
+                for osclass in match.findall("osclass"):
+                    attrib["osclass"]=osclass.attrib
+
+                    for cpe in osclass.findall("cpe"):
+                        attrib["cpe"]=cpe.text
+                os_list.append(attrib)
+            return os_list
+        else:
+            return {}
+            
+    def parse_ports(self, xml_hosts):
+        """
+        Parse parts from xml
+        """
+        open_ports_list = []
+        
+        for port in xml_hosts.findall("ports/port"):
+            open_ports = {}            
+            for key in port.attrib:
+                open_ports[key]=port.attrib.get(key)
+                
+            if(port.find('state') is not None):
+                for key in port.find('state').attrib:
+                    open_ports[key]=port.find("state").attrib.get(key)
+           
+            if(port.find('service') is not None):
+                open_ports["service"]=port.find("service").attrib
+                
+                for cp in port.find("service").findall("cpe"):
+                    cpe_list = []
+                    cpe_list.append({"cpe": cp.text})
+                    open_ports["cpe"] = cpe_list
+            open_ports_list.append(open_ports)
+        return open_ports_list
+                    
+    def parse_runtime(self, xml):
+        """
+        Parse parts from xml
+        """
+        runstats = xml.find("runstats")
+        runtime = {}
+        
+        if runstats is not None:
+            if runstats.find("finished") is not None:
+                return runstats.find("finished").attrib
+                
+    def total_hosts(self, xml):
+        """
+        Parse parts from xml
+        """
+        hosts = xml.find("runstats/hosts")
+        if hosts is not None:
+            return hosts.attrib
+        return {}
+        
+    def parse_mac_address(self, xml):
+        """
+        Parse parts from xml
+        """
+        addresses = xml.findall("host/address")
+        
+        for addr in addresses:
+            if(addr.attrib.get("addrtype") == "mac"):
+                return addr.attrib
+        return {}
+        
+    def parse_hostnames(self, host):
+        """
+        Parse parts from xml
+        """
+        hostnames = host.findall("hostnames/hostname")
+        hostnames_list = []
+        
+        for host in hostnames:
+            hostnames_list.append(host.attrib)
+        return hostnames_list
+    
+    def get_hostname_state(self, xml):
+        """
+        Parse parts from xml
+        """
+        state = xml.find("status")
+        if(state is not None):
+            return state.attrib
+        return {}
