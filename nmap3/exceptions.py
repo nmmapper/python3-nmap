@@ -23,10 +23,9 @@ import subprocess
 import sys
 import re
 
-__author__ = 'Wangolo Joel (info@nmapper.com)'
-__version__ = '1.4.7'
-__last_modification__ = '2029/06/11'
-
+__author__ = 'Wangolo Joel (inquiry@nmapper.com)'
+__version__ = '1.4.9'
+__last_modification__ = '2029/12/11'
 
 class NmapNotInstalledError(Exception):
     """Exception raised when nmap is not installed"""
@@ -41,4 +40,7 @@ class NmapXMLParserError(Exception):
     def __init__(self, message="Unable to parse xml output"):
         self.message = message 
         super().__init__(message)
-        
+
+class NmapExecutionError(Exception):
+    """Exception raised when en error occurred during nmap call"""
+

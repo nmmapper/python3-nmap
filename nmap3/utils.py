@@ -24,9 +24,9 @@ import sys
 import re
 import os
 
-__author__ = 'Wangolo Joel (info@nmapper.com)'
-__version__ = '0.1.1'
-__last_modification__ = '2019/11/22'
+__author__ = 'Wangolo Joel (inquiry@nmapper.com)'
+__version__ = '1.4.9'
+__last_modification__ = '2019/12/11'
 
 
 def get_nmap_path():
