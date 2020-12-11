@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="python3-nmap", 
-    version="1.4.8",
+    version="1.4.9",
     author="Wangolo Joel",
     author_email="info@nmmapper.com",
     description="Python3-nmap converts Nmap commands into python3 methods making it very easy to use nmap in any of your python pentesting projects",
