@@ -200,7 +200,7 @@ class NmapCommandParser(object):
         """
         Parse parts from xml
         """
-        addresses = xml.findall("host/address")
+        addresses = xml.findall("address")
         
         for addr in addresses:
             if(addr.attrib.get("addrtype") == "mac"):
