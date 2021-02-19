@@ -29,5 +29,5 @@ setuptools.setup(
     ],
     python_requires='>=3.6',
     setup_requires=['wheel'],
-    install_requires=['requests', 'sphinx', 'sphinx_rtd_theme', 'simplejson'],
+    install_requires=['simplejson'],
 )

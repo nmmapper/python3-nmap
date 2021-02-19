@@ -113,7 +113,7 @@ class Nmap(object):
         return version_data
 
     # Unique method for repetitive tasks - Use of 'target' variable instead of 'host' or 'subnet' - no need to make difference between 2 strings that are used for the same purpose
-    def scan_command(self, target, arg, args=None):
+    def scan_command(self, target, arg, args=None, timeout=None):
         self.target == target
         
         command_args = "{target}  {default}".format(target=target, default=arg)
@@ -122,12 +122,12 @@ class Nmap(object):
             scancommand += " {0}".format(args)
         
         scan_shlex = shlex.split(scancommand)
-        output = self.run_command(scan_shlex)
+        output = self.run_command(scan_shlex, timeout=timeout)
         xml_root = self.get_xml_et(output)
 
         return xml_root
 
-    def scan_top_ports(self, target, default=10, args=None):
+    def scan_top_ports(self, target, default=10, args=None, timeout=None):
         """
         Perform nmap's top ports scan
 
@@ -150,7 +150,7 @@ class Nmap(object):
         scan_shlex = shlex.split(scan_command)
 
         # Run the command and get the output
-        output = self.run_command(scan_shlex)
+        output = self.run_command(scan_shlex, timeout=timeout)
         if not output:
             # Probaby and error was raise
             raise ValueError("Unable to perform requested command")
@@ -160,7 +160,7 @@ class Nmap(object):
         self.top_ports = self.parser.filter_top_ports(xml_root)
         return self.top_ports
 
-    def nmap_dns_brute_script(self, target, dns_brute="--script dns-brute.nse"):
+    def nmap_dns_brute_script(self, target, dns_brute="--script dns-brute.nse", timeout=None):
         """
         Perform nmap scan using the dns-brute script
 
@@ -177,14 +177,14 @@ class Nmap(object):
         dns_brute_shlex = shlex.split(dns_brute_command) # prepare it for popen
 
         # Run the command and get the output
-        output = self.run_command(dns_brute_shlex)
+        output = self.run_command(dns_brute_shlex, timeout=timeout)
 
         # Begin parsing the xml response
         xml_root = self.get_xml_et(output)
         subdomains = self.parser.filter_subdomains(xml_root)
         return subdomains
 
-    def nmap_version_detection(self, target, arg="-sV", args=None):
+    def nmap_version_detection(self, target, arg="-sV", args=None, timeout=None):
         """
         Perform nmap scan using the dns-brute script
 
@@ -192,7 +192,7 @@ class Nmap(object):
 
         nmap -oX - nmmapper.com --script dns-brute.nse
         """
-        xml_root = self.scan_command(target=target, arg=arg, args=args)
+        xml_root = self.scan_command(target=target, arg=arg, args=args, timeout=timeout)
         services = self.parser.filter_top_ports(xml_root)
         return services
 
@@ -245,16 +245,17 @@ class Nmap(object):
         results = self.parser.filter_top_ports(xml_root)
         return results
 
-    def run_command(self, cmd):
+    def run_command(self, cmd, timeout=None):
         """
         Runs the nmap command using popen
 
         @param: cmd--> the command we want run eg /usr/bin/nmap -oX -  nmmapper.com --top-ports 10
+        @param: timeout--> command subprocess timeout in seconds.
         """
         if (os.path.exists(self.nmaptool)):
             sub_proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             try:
-                output, errs = sub_proc.communicate()
+                output, errs = sub_proc.communicate(timeout=timeout)
             except Exception as e:
                 sub_proc.kill()
                 raise (e)
@@ -303,7 +304,7 @@ class NmapScanTechniques(Nmap):
         self.parser  = NmapCommandParser(None)
 
     # Unique method for repetitive tasks - Use of 'target' variable instead of 'host' or 'subnet' - no need to make difference between 2 strings that are used for the same purpose. Creating a scan template as a switcher
-    def scan_command(self, scan_type, target, args):
+    def scan_command(self, scan_type, target, args, timeout=None):
         def tpl(i):
             scan_template = {
                 1:self.fin_scan,
@@ -327,7 +328,7 @@ class NmapScanTechniques(Nmap):
                 scan_shlex = shlex.split(scan_type_command)
 
                 # Use the ping scan parser
-                output = self.run_command(scan_shlex)
+                output = self.run_command(scan_shlex, timeout=timeout)
                 xml_root = self.get_xml_et(output)
 
         return xml_root
@@ -422,7 +423,7 @@ class NmapHostDiscovery(Nmap):
         self.parser  = NmapCommandParser(None)
 
 
-    def scan_command(self, scan_type, target, args):
+    def scan_command(self, scan_type, target, args, timeout=None):
         def tpl(i):
             scan_template = {
                 1:self.port_scan_only,
@@ -444,7 +445,7 @@ class NmapHostDiscovery(Nmap):
                 scan_shlex = shlex.split(scan_type_command)
 
                 # Use the ping scan parser
-                output = self.run_command(scan_shlex)
+                output = self.run_command(scan_shlex, timeout=timeout)
                 xml_root = self.get_xml_et(output)
 
         return xml_root
