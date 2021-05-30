@@ -29,7 +29,6 @@ import simplejson as json
 import argparse
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import ParseError
-
 from nmap3.nmapparser import NmapCommandParser
 from nmap3.utils import get_nmap_path, user_is_root
 from nmap3.exceptions import NmapNotInstalledError, NmapXMLParserError, NmapExecutionError
@@ -499,5 +498,5 @@ if __name__=="__main__":
     args = parser.parse_args()
 
     nmap = Nmap()
-    result = nmap.nmap_version_detection(args.d, args="-T3")
+    result = nmap.nmap_os_detection(args.d)
     print(json.dumps(result, indent=4, sort_keys=True))

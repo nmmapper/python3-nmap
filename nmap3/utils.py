@@ -23,6 +23,7 @@ import subprocess
 import sys
 import re
 import os
+import ctypes
 
 __author__ = 'Wangolo Joel (inquiry@nmapper.com)'
 __version__ = '1.4.9'
@@ -71,8 +72,13 @@ def get_nmap_version():
 
 def user_is_root(func):
     def wrapper(*args, **kwargs):
-        if(os.geteuid() == 0):
+        try:
+            is_root_or_admin = (os.getuid() == 0)
+        except AttributeError as e:
+            is_admin = ctypes.windll.shell32.IsUserAnAdmin() != 0
+            
+        if(is_root_or_admin):
             return func(*args, **kwargs)
         else:
-            return {"error":True, "msg":"You must be root to continue!"}
+            return {"error":True, "msg":"You must be root/administrator to continue!"}
     return wrapper 
