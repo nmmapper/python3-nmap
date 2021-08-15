@@ -75,7 +75,7 @@ def user_is_root(func):
         try:
             is_root_or_admin = (os.getuid() == 0)
         except AttributeError as e:
-            is_admin = ctypes.windll.shell32.IsUserAnAdmin() != 0
+            is_root_or_admin = ctypes.windll.shell32.IsUserAnAdmin() != 0
             
         if(is_root_or_admin):
             return func(*args, **kwargs)
