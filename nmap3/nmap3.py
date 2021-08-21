@@ -40,11 +40,13 @@ __version__ = '1.4.9'
 __last_modification__ = '2020/12/10'
 OS_TYPE = sys.platform
 
+
 class Nmap(object):
     """
     This nmap class allows us to use the nmap port scanner tool from within python
     by calling nmap3.Nmap()
     """
+
     def __init__(self, path=None):
         """
         Module initialization
@@ -57,7 +59,7 @@ class Nmap(object):
         self.maxport = 65389
         self.target = ""
         self.top_ports = dict()
-        self.parser  = NmapCommandParser(None)
+        self.parser = NmapCommandParser(None)
         self.raw_ouput = None
         self.as_root = False
 
@@ -66,7 +68,7 @@ class Nmap(object):
         Call this method to add "sudo" in front of nmap call
         """
         self.as_root = required
-        
+
     def default_command(self):
         """
         Returns the default nmap command
@@ -77,7 +79,7 @@ class Nmap(object):
             return self.default_command_privileged()
 
         return self.default_args.format(nmap=self.nmaptool, outarg="-oX")
-    
+
     def default_command_privileged(self):
         """
         Commands that require root privileges
@@ -85,9 +87,9 @@ class Nmap(object):
         if OS_TYPE == 'win32':
             # Elevate privileges and return nmap command
             # For windows now is not fully supported so just return the default
-            return self.default_command() 
+            return self.default_command()
         else:
-            return self.default_args.format(nmap="sudo "+self.nmaptool, outarg="-oX")
+            return self.default_args.format(nmap="sudo " + self.nmaptool, outarg="-oX")
 
     def nmap_version(self):
         """
@@ -114,12 +116,12 @@ class Nmap(object):
     # Unique method for repetitive tasks - Use of 'target' variable instead of 'host' or 'subnet' - no need to make difference between 2 strings that are used for the same purpose
     def scan_command(self, target, arg, args=None, timeout=None):
         self.target == target
-        
+
         command_args = "{target}  {default}".format(target=target, default=arg)
         scancommand = self.default_command() + command_args
-        if(args):
+        if (args):
             scancommand += " {0}".format(args)
-        
+
         scan_shlex = shlex.split(scancommand)
         output = self.run_command(scan_shlex, timeout=timeout)
         xml_root = self.get_xml_et(output)
@@ -135,16 +137,16 @@ class Nmap(object):
 
         This top port requires root previledges
         """
-        if(default > self.maxport):
+        if (default > self.maxport):
             raise ValueError("Port can not be greater than default 65389")
         self.target = target
 
-        if(args):
-            assert(isinstance(args, str)), "Expected string got {0} instead".format(type(args))
+        if (args):
+            assert (isinstance(args, str)), "Expected string got {0} instead".format(type(args))
 
         top_port_args = " {target} --top-ports {default}".format(target=target, default=default)
         scan_command = self.default_command() + top_port_args
-        if(args):
+        if (args):
             scan_command += " {0}".format(args)
         scan_shlex = shlex.split(scan_command)
 
@@ -173,7 +175,7 @@ class Nmap(object):
         dns_brute_args = "{target}  {default}".format(target=target, default=dns_brute)
 
         dns_brute_command = self.default_command() + dns_brute_args
-        dns_brute_shlex = shlex.split(dns_brute_command) # prepare it for popen
+        dns_brute_shlex = shlex.split(dns_brute_command)  # prepare it for popen
 
         # Run the command and get the output
         output = self.run_command(dns_brute_shlex, timeout=timeout)
@@ -204,8 +206,8 @@ class Nmap(object):
         xml_root = self.scan_command(target=target, arg=arg, args=args)
         self.top_ports = self.parser.filter_top_ports(xml_root)
         return self.top_ports
-    
-    def nmap_detect_firewall(self, target, arg="-sA", args=None): # requires root
+
+    def nmap_detect_firewall(self, target, arg="-sA", args=None):  # requires root
         """
         nmap -oX - nmmapper.com -sA
         @ TODO
@@ -214,7 +216,7 @@ class Nmap(object):
         # TODO
 
     @user_is_root
-    def nmap_os_detection(self, target, arg="-O", args=None): # requires root
+    def nmap_os_detection(self, target, arg="-O", args=None):  # requires root
         """
         nmap -oX - nmmapper.com -O
         NOTE: Requires root
@@ -223,7 +225,7 @@ class Nmap(object):
         results = self.parser.os_identifier_parser(xml_root)
         return results
 
-    def nmap_subnet_scan(self, target, arg="-p-", args=None): # requires root
+    def nmap_subnet_scan(self, target, arg="-p-", args=None):  # requires root
         """
         nmap -oX - nmmapper.com -p-
         NOTE: Requires root
@@ -232,7 +234,7 @@ class Nmap(object):
         results = self.parser.filter_top_ports(xml_root)
         return results
 
-    def nmap_list_scan(self, target, arg="-sL", args=None): # requires root
+    def nmap_list_scan(self, target, arg="-sL", args=None):  # requires root
         """
         The list scan is a degenerate form of target discovery that simply lists each target of the network(s)
         specified, without sending any packets to the target targets.
@@ -276,7 +278,8 @@ class Nmap(object):
             return ET.fromstring(command_output)
         except ParseError:
             raise NmapXMLParserError()
-            
+
+
 class NmapScanTechniques(Nmap):
     """
     Extends Nmap to include nmap commands
@@ -300,30 +303,30 @@ class NmapScanTechniques(Nmap):
         self.ping_scan = "-sP"
         self.idle_scan = "-sL"
         self.udp_scan = "-sU"
-        self.parser  = NmapCommandParser(None)
+        self.parser = NmapCommandParser(None)
 
     # Unique method for repetitive tasks - Use of 'target' variable instead of 'host' or 'subnet' - no need to make difference between 2 strings that are used for the same purpose. Creating a scan template as a switcher
     def scan_command(self, scan_type, target, args, timeout=None):
         def tpl(i):
             scan_template = {
-                1:self.fin_scan,
-                2:self.sync_scan,
-                3:self.tcp_connt,
-                4:self.ping_scan,
-                5:self.idle_scan,
-                6:self.udp_scan
+                1: self.fin_scan,
+                2: self.sync_scan,
+                3: self.tcp_connt,
+                4: self.ping_scan,
+                5: self.idle_scan,
+                6: self.udp_scan
             }
 
             return scan_template.get(i)
-        
-        for i in range (1, 7):
+
+        for i in range(1, 7):
             if scan_type == tpl(i):
                 scan = " {target} {default}".format(target=target, default=scan_type)
                 scan_type_command = self.default_command() + scan
 
-                if(args):
+                if (args):
                     scan_type_command += " {0}".format(args)
-                
+
                 scan_shlex = shlex.split(scan_type_command)
 
                 # Use the ping scan parser
@@ -363,12 +366,12 @@ class NmapScanTechniques(Nmap):
 
         @cmd nmap -sT 192.168.178.1
         """
-        if(args):
-            assert(isinstance(args, str)), "Expected string got {0} instead".format(type(args))
+        if (args):
+            assert (isinstance(args, str)), "Expected string got {0} instead".format(type(args))
         xml_root = self.scan_command(self.tcp_connt, target=target, args=args)
         results = self.parser.filter_top_ports(xml_root)
         return results
-        
+
     def nmap_udp_scan(self, target, args=None):
         """
         Scan target using the nmap tcp connect
@@ -377,8 +380,8 @@ class NmapScanTechniques(Nmap):
         """
         self.require_root()
 
-        if(args):
-            assert(isinstance(args, str)), "Expected string got {0} instead".format(type(args))
+        if (args):
+            assert (isinstance(args, str)), "Expected string got {0} instead".format(type(args))
         xml_root = self.scan_command(self.udp_scan, target=target, args=args)
         results = self.parser.filter_top_ports(xml_root)
         return results
@@ -403,6 +406,7 @@ class NmapScanTechniques(Nmap):
         results = self.parser.filter_top_ports(xml_root)
         return results
 
+
 class NmapHostDiscovery(Nmap):
     """
     This object will perform host discovery
@@ -412,6 +416,7 @@ class NmapHostDiscovery(Nmap):
     3) Arp discovery on a local network  (-PR)
     4) Disable DNS resolution    (-n)
     """
+
     def __init__(self, path=None):
         super(NmapHostDiscovery, self).__init__(path=path)
 
@@ -419,28 +424,27 @@ class NmapHostDiscovery(Nmap):
         self.no_port_scan = "-sn"
         self.arp_discovery = "-PR"
         self.disable_dns = "-n"
-        self.parser  = NmapCommandParser(None)
-
+        self.parser = NmapCommandParser(None)
 
     def scan_command(self, scan_type, target, args, timeout=None):
         def tpl(i):
             scan_template = {
-                1:self.port_scan_only,
-                2:self.no_port_scan,
-                3:self.arp_discovery,
-                4:self.disable_dns
+                1: self.port_scan_only,
+                2: self.no_port_scan,
+                3: self.arp_discovery,
+                4: self.disable_dns
             }
 
             return scan_template.get(i)
-        
-        for i in range (1, 5):
+
+        for i in range(1, 5):
             if scan_type == tpl(i):
                 scan = " {target} {default}".format(target=target, default=scan_type)
                 scan_type_command = self.default_command() + scan
 
-                if(args):
+                if (args):
                     scan_type_command += " {0}".format(args)
-                
+
                 scan_shlex = shlex.split(scan_type_command)
 
                 # Use the ping scan parser
@@ -465,8 +469,8 @@ class NmapHostDiscovery(Nmap):
 
         @cmd nmap -sn 192.168.178.1
         """
-        if(args):
-            assert(isinstance(args, str)), "Expected string got {0} instead".format(type(args))
+        if (args):
+            assert (isinstance(args, str)), "Expected string got {0} instead".format(type(args))
         xml_root = self.scan_command(self.no_port_scan, target=target, args=args)
         results = self.parser.filter_top_ports(xml_root)
         return results
@@ -476,8 +480,8 @@ class NmapHostDiscovery(Nmap):
         Scan target using the nmap tcp connect
         @cmd nmap -PR 192.168.178.1
         """
-        if(args):
-            assert(isinstance(args, str)), "Expected string got {0} instead".format(type(args))
+        if (args):
+            assert (isinstance(args, str)), "Expected string got {0} instead".format(type(args))
         xml_root = self.scan_command(self.arp_discovery, target=target, args=args)
         results = self.parser.filter_top_ports(xml_root)
         return results
@@ -487,13 +491,14 @@ class NmapHostDiscovery(Nmap):
         Scan target using the nmap tcp connect
         @cmd nmap -n 192.168.178.1
         """
-        if(args):
-            assert(isinstance(args, str)), "Expected string got {0} instead".format(type(args))
+        if (args):
+            assert (isinstance(args, str)), "Expected string got {0} instead".format(type(args))
         xml_root = self.scan_command(self.disable_dns, target=target, args=args)
         results = self.parser.filter_top_ports(xml_root)
         return results
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="Python3 nmap")
     parser.add_argument('-d', '--d', help='Help', required=True)
     args = parser.parse_args()
