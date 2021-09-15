@@ -2,22 +2,23 @@
 
 # python3-nmap
 
-A python 3  library which helps in using nmap port scanner. The way this tools works is by defining each nmap command into a python function making it very easy to use sophisticated nmap commands in other python scripts. Nmap is a complicated piece of software used for reconnaissance on target networks, over the years new features have been added making it more sophisticated.
+A python 3  library which helps in using nmap port scanner. The way this tools works is by defining each nmap command into a python function, making it very easy to use sophisticated nmap commands in other python scripts. Nmap is a complicated piece of software used for reconnaissance on target networks, over the years new features have been added making it more sophisticated.
 
 With this python3-nmap we make using nmap in python very easy and painless
 
-For example in nmap if you want to scan for common ports you would to something like this
+
+For example, in nmap if you want to scan for common ports you would do something like this
 ```sh
 $ nmap your-host.com --top-ports 10
 ```
-But in this python3-nmap  script you would do something like this
+But in this python3-nmap  script, you would do something like this
 ```py
 import nmap3
 nmap = nmap3.Nmap()
 results = nmap.scan_top_ports("your-host.com")
 # And you would get your results in json
 ```
-You will notice each nmap command is defined as a python function/method. this make it easy to remember this in python and easily use them.
+You will notice each nmap command is defined as a python function/method. This make it easy to remember this in python and easily use them.
 
 Again in nmap if you want to use the famous dns-brute script you would do something like this
 ```sh
@@ -43,7 +44,7 @@ results = nmap.nmap_dns_brute_script("your-host.com")
 ```
 
 #### How to use python3-nmap
-Using this scripts is very easy, though it assumes you have nmap already installed, as it is the primary dependence required. Also this tools supports both windows and linux, it's cross platform so to say.
+Using this scripts is very easy, though it assumes you have nmap already installed, as it is the primary dependence required. Also, this tools supports both windows and Linux, it's cross-platform so to say.
 
 **Installation**
 ```sh
@@ -57,7 +58,7 @@ $ apt-get install nmap
 
 # That's all is needed to get started
 ```
-In nmap some commands require root privileges for example the command to identify OS requires root privileges;
+In nmap some commands require root privileges, for example the command to identify OS requires root privileges;
 ```sh
 $ nmap -O your-host.com
 
@@ -68,7 +69,7 @@ QUITTING!
 $ sudo nmap -O your-host.com
 
 ```
-The same applies to the script to be able to run the os identifier  you have to be a super user.
+The same applies to the script, to be able to run the OS identifier  you have to be a superuser.
 
 ### How to use the script to identify OS
 ```py
@@ -145,7 +146,7 @@ In nmap if you want to identify versions you would run this kind of command
 ```sh
 $ nmap 192.168.178.1  -sV
 ```
-In this python script you would do something like this
+In this python script, you would do something like this
 ```py
 import nmap3
 nmap = nmap3.Nmap()
@@ -334,8 +335,8 @@ NmapHostDiscovery
 Nmap is a large tool, as you can see python3-nmap provides only things what you could say commonly used nmap features.
 
 ### Using custom nmap command line arguments.
-As we said, the script defines each set of nmap command as python function/methods. You can also pass arguments to those methods/function thus extending your capabilities for example.
-Let's say we want to scan top ports but also perform version detection .
+As we said, the script defines each set of nmap command as python function/methods. You can also pass arguments to those methods/function, thus extending your capabilities, for example.
+Let's say we want to scan top ports but also perform version detection.
 
 ```python
    import nmap3
