@@ -70,15 +70,17 @@ def get_nmap_version():
     else:
         return output.decode('utf8').strip()
 
+
 def user_is_root(func):
     def wrapper(*args, **kwargs):
         try:
             is_root_or_admin = (os.getuid() == 0)
         except AttributeError as e:
             is_root_or_admin = ctypes.windll.shell32.IsUserAnAdmin() != 0
-            
-        if(is_root_or_admin):
+
+        if is_root_or_admin:
             return func(*args, **kwargs)
         else:
-            return {"error":True, "msg":"You must be root/administrator to continue!"}
-    return wrapper 
+            return {"error": True, "msg": "You must be root/administrator to continue!"}
+
+    return wrapper
