@@ -21,7 +21,6 @@ project = 'python3-nmap'
 copyright = '2019, Wangolo Joel'
 author = 'Wangolo Joel'
 
-
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -38,7 +37,6 @@ templates_path = ['_templates']
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -51,7 +49,6 @@ html_theme = 'sphinx_rtd_theme'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-
-#-----PERSONAL----
+# -----PERSONAL----
 master_doc = 'index'
 source_suffix = '.rst'
