@@ -343,6 +343,15 @@ Let's say we want to scan top ports but also perform version detection .
    results = nmap.scan_top_ports("host", args="-sV")
 ```
 
+### Using the nmap vulners script to identify vulnerabilities (CVE's)
+You scan the the target IP using version detection ('-sV') to get the service and, the script performs a lookup in the CVE database. The nmap vulners script is part of the default Nmap installation, so you shouldn't need to install any other packages.  
+
+```python
+   import nmap3
+   nmap = nmap3.Nmap()
+   ressults = nmap_version_detection("host", args="--script vulners --script-args mincvss+5.0")
+```
+
 ## Cross-Selling
 * [Ethical-tools](https://ethicaltools.gitbook.io/subdomainfinder/)
 * [Wappalyzer online](https://www.nmmapper.com/st/cms-detection/wappalyzer-online/)
