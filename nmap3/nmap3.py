@@ -47,7 +47,7 @@ class Nmap(object):
     by calling nmap3.Nmap()
     """
 
-    def __init__(self, path=None):
+    def __init__(self, enable_ipv6=False, path=None):
         """
         Module initialization
 
@@ -55,13 +55,14 @@ class Nmap(object):
         """
 
         self.nmaptool = path if path else get_nmap_path()
-        self.default_args = "{nmap}  {outarg}  -  "
+        self.default_args = "{nmap}  {outarg}  -  {enable_ipv6}"
         self.maxport = 65389
         self.target = ""
         self.top_ports = dict()
         self.parser = NmapCommandParser(None)
         self.raw_ouput = None
         self.as_root = False
+        self.enable_ipv6 = enable_ipv6
 
     def require_root(self, required=True):
         """
@@ -78,7 +79,10 @@ class Nmap(object):
         if self.as_root:
             return self.default_command_privileged()
 
-        return self.default_args.format(nmap=self.nmaptool, outarg="-oX")
+        if self.enable_ipv6:
+            return self.default_args.format(nmap=self.nmaptool, outarg="-oX", enable_ipv6="-6")
+        else:
+            return self.default_args.format(nmap=self.nmaptool, outarg="-oX")
 
     def default_command_privileged(self):
         """
@@ -89,7 +93,10 @@ class Nmap(object):
             # For windows now is not fully supported so just return the default
             return self.default_command()
         else:
-            return self.default_args.format(nmap="sudo " + self.nmaptool, outarg="-oX")
+            if self.enable_ipv6:
+                return self.default_args.format(nmap=self.nmaptool, outarg="-oX", enable_ipv6="-6")
+            else:
+                return self.default_args.format(nmap=self.nmaptool, outarg="-oX")
 
     def nmap_version(self):
         """
