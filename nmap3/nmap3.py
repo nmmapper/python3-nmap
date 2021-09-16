@@ -160,7 +160,7 @@ class Nmap(object):
         # Run the command and get the output
         output = self.run_command(scan_shlex, timeout=timeout)
         if not output:
-            # Probably and error was raise
+            # Probably an error was raised
             raise ValueError("Unable to perform requested command")
 
         # Begin parsing the xml response
