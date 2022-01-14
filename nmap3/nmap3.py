@@ -18,6 +18,7 @@
 #  MA 02110-1301, USA.
 #
 #
+
 import csv
 import io
 import os
@@ -32,14 +33,13 @@ from xml.etree.ElementTree import ParseError
 from nmap3.nmapparser import NmapCommandParser
 from nmap3.utils import get_nmap_path, user_is_root
 from nmap3.exceptions import NmapNotInstalledError, NmapXMLParserError, NmapExecutionError
-
 import xml
 
 __author__ = 'Wangolo Joel (inquiry@nmapper.com)'
 __version__ = '1.4.9'
-__last_modification__ = '2020/12/10'
-OS_TYPE = sys.platform
+__last_modification__ = 'Jan/14/2022'
 
+OS_TYPE = sys.platform
 
 class Nmap(object):
     """
@@ -77,7 +77,6 @@ class Nmap(object):
         """
         if self.as_root:
             return self.default_command_privileged()
-
         return self.default_args.format(nmap=self.nmaptool, outarg="-oX")
 
     def default_command_privileged(self):
@@ -502,7 +501,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="Python3 nmap")
     parser.add_argument('-d', '--d', help='Help', required=True)
     args = parser.parse_args()
-
-    nmap = Nmap()
-    result = nmap.nmap_os_detection(args.d)
+    
+    #nmap = nmap3.NmapScanTechniques()
+    nmap = NmapHostDiscovery()
+    result = nmap.nmap_portscan_only(target='127.0.0.1', args="-6")
     print(json.dumps(result, indent=4, sort_keys=True))
