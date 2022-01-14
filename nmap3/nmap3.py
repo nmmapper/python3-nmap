@@ -30,9 +30,14 @@ import simplejson as json
 import argparse
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import ParseError
-from nmap3.nmapparser import NmapCommandParser
-from nmap3.utils import get_nmap_path, user_is_root
-from nmap3.exceptions import NmapNotInstalledError, NmapXMLParserError, NmapExecutionError
+from nmapparser import NmapCommandParser
+from utils import get_nmap_path, user_is_root
+from exceptions import NmapNotInstalledError, NmapXMLParserError, NmapExecutionError
+
+#from nmap3.nmapparser import NmapCommandParser
+#from nmap3.utils import get_nmap_path, user_is_root
+#from nmap3.exceptions import NmapNotInstalledError, NmapXMLParserError, NmapExecutionError
+
 import xml
 
 __author__ = 'Wangolo Joel (inquiry@nmapper.com)'
@@ -88,7 +93,7 @@ class Nmap(object):
             # For windows now is not fully supported so just return the default
             return self.default_command()
         else:
-            return self.default_args.format(nmap="sudo " + self.nmaptool, outarg="-oX")
+            return self.default_args.format(nmap=self.nmaptool, outarg="-oX")
 
     def nmap_version(self):
         """
@@ -502,7 +507,6 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--d', help='Help', required=True)
     args = parser.parse_args()
     
-    #nmap = nmap3.NmapScanTechniques()
-    nmap = NmapHostDiscovery()
-    result = nmap.nmap_portscan_only(target='127.0.0.1', args="-6")
+    nmap = Nmap()
+    result = nmap.scan_top_ports(target='127.0.0.1')
     print(json.dumps(result, indent=4, sort_keys=True))
