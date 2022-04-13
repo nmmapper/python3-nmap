@@ -173,11 +173,11 @@ class NmapCommandParser(object):
            
             if(port.find('service') is not None):
                 open_ports["service"]=port.find("service").attrib
-                
+                cpe_list = []
                 for cp in port.find("service").findall("cpe"):
-                    cpe_list = []
+                    
                     cpe_list.append({"cpe": cp.text})
-                    open_ports["cpe"] = cpe_list
+                open_ports["cpe"] = cpe_list
             
             # Script
             open_ports["scripts"]=self.parse_scripts(port.findall('script')) if port.findall('script') is not None else []
