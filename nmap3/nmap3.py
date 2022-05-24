@@ -19,25 +19,18 @@
 #
 #
 
-import csv
-import io
 import os
-import re
 import shlex
 import subprocess
 import sys
 import simplejson as json
 import argparse
+import asyncio
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import ParseError
-from nmapparser import NmapCommandParser
-from utils import get_nmap_path, user_is_root
-from exceptions import NmapNotInstalledError, NmapXMLParserError, NmapExecutionError
-
-#from nmap3.nmapparser import NmapCommandParser
-#from nmap3.utils import get_nmap_path, user_is_root
-#from nmap3.exceptions import NmapNotInstalledError, NmapXMLParserError, NmapExecutionError
-
+from nmap3.nmapparser import NmapCommandParser
+from nmap3.utils import get_nmap_path, user_is_root
+from nmap3.exceptions import NmapNotInstalledError, NmapXMLParserError, NmapExecutionError
 import xml
 
 __author__ = 'Wangolo Joel (inquiry@nmapper.com)'
@@ -225,6 +218,7 @@ class Nmap(object):
         nmap -oX - nmmapper.com -O
         NOTE: Requires root
         """
+        print("Performing some scannins")
         xml_root = self.scan_command(target=target, arg=arg, args=args)
         results = self.parser.os_identifier_parser(xml_root)
         return results
@@ -272,7 +266,7 @@ class Nmap(object):
                 return output.decode('utf8').strip()
         else:
             raise NmapNotInstalledError()
-
+            
     def get_xml_et(self, command_output):
         """
         @ return xml ET
@@ -282,7 +276,6 @@ class Nmap(object):
             return ET.fromstring(command_output)
         except ParseError:
             raise NmapXMLParserError()
-
 
 class NmapScanTechniques(Nmap):
     """
@@ -339,6 +332,7 @@ class NmapScanTechniques(Nmap):
 
         return xml_root
 
+    @user_is_root
     def nmap_fin_scan(self, target, args=None):
         """
         Perform scan using nmap's fin scan
@@ -346,12 +340,11 @@ class NmapScanTechniques(Nmap):
         @cmd nmap -sF 192.168.178.1
 
         """
-        self.require_root()
-
         xml_root = self.scan_command(self.fin_scan, target=target, args=args)
         results = self.parser.filter_top_ports(xml_root)
         return results
-
+    
+    @user_is_root
     def nmap_syn_scan(self, target, args=None):
         """
         Perform syn scan on this given
@@ -359,7 +352,6 @@ class NmapScanTechniques(Nmap):
 
         @cmd nmap -sS 192.168.178.1
         """
-        self.require_root()
         xml_root = self.scan_command(self.sync_scan, target=target, args=args)
         results = self.parser.filter_top_ports(xml_root)
         return results
@@ -375,14 +367,14 @@ class NmapScanTechniques(Nmap):
         xml_root = self.scan_command(self.tcp_connt, target=target, args=args)
         results = self.parser.filter_top_ports(xml_root)
         return results
-
+    
+    @user_is_root
     def nmap_udp_scan(self, target, args=None):
         """
         Scan target using the nmap tcp connect
 
         @cmd nmap -sU 192.168.178.1
         """
-        self.require_root()
 
         if (args):
             assert (isinstance(args, str)), "Expected string got {0} instead".format(type(args))
@@ -409,7 +401,6 @@ class NmapScanTechniques(Nmap):
         xml_root = self.scan_command(self.idle_scan, target=target, args=args)
         results = self.parser.filter_top_ports(xml_root)
         return results
-
 
 class NmapHostDiscovery(Nmap):
     """
@@ -501,12 +492,95 @@ class NmapHostDiscovery(Nmap):
         results = self.parser.filter_top_ports(xml_root)
         return results
 
+class NmapAsync(Nmap):
+    def __init__(self, path=None):
+        super(NmapAsync, self).__init__(path=path)
+        self.stdout = asyncio.subprocess.PIPE
+        self.stderr = asyncio.subprocess.PIPE
+        
+    async def run_command(self, cmd, timeout=None):        
+        if (os.path.exists(self.nmaptool)):            
+            process = await asyncio.create_subprocess_shell(cmd,stdout=self.stdout,stderr=self.stderr)
+            
+            try:
+                data, stderr = await process.communicate()
+            except Exception as e:
+                raise (e)
+            else:
+                if 0 != process.returncode:
+                    raise NmapExecutionError('Error during command: "' + ' '.join(cmd) + '"\n\n' + errs.decode('utf8'))
 
+                # Response is bytes so decode the output and return
+                return data.decode('utf8').strip()
+        else:
+            raise NmapNotInstalledError()
+    
+    async def scan_command(self, target, arg, args=None, timeout=None):
+        self.target == target
+
+        command_args = "{target}  {default}".format(target=target, default=arg)
+        scancommand = self.default_command() + command_args
+        if (args):
+            scancommand += " {0}".format(args)
+
+        output = await self.run_command(scancommand, timeout=timeout)
+        xml_root = self.get_xml_et(output)
+
+        return xml_root
+        
+    async def scan_top_ports(self, target, default=10, args=None, timeout=None):
+        top_port_args = " {target} --top-ports {default}".format(target=target, default=default)
+        command = self.default_command() + top_port_args
+        if (args):
+            command += " {0}".format(args)
+
+        output = await self.run_command(command, timeout=timeout)
+        if not output:
+            raise ValueError("Unable to perform requested command")
+
+        self.top_ports = self.parser.filter_top_ports(self.get_xml_et(output))
+        return self.top_ports
+    
+    async def nmap_dns_brute_script(self, target, dns_brute="--script dns-brute.nse", timeout=None):
+        self.target = target
+
+        dns_brute_args = "{target}  {default}".format(target=target, default=dns_brute)
+        dns_brute_command = self.default_command() + dns_brute_args
+
+        # Run the command and get the output
+        output = await self.run_command(dns_brute_command, timeout=timeout)
+        subdomains = self.parser.filter_subdomains(self.get_xml_et(output))
+        return subdomains
+
+    async def nmap_version_detection(self, target, arg="-sV", args=None, timeout=None):
+        xml_root = await self.scan_command(target=target, arg=arg, timeout=timeout)
+        services = self.parser.filter_top_ports(xml_root)
+        return services
+
+    async def nmap_stealth_scan(self, target, arg="-Pn -sZ", args=None):
+        xml_root = await self.scan_command(target=target, arg=arg, args=args)
+        self.top_ports = self.parser.filter_top_ports(xml_root)
+        return self.top_ports
+
+    async def nmap_os_detection(self, target, arg="-O", args=None):  # requires root
+        xml_root = await self.scan_command(target=target, arg=arg, args=args)
+        results = self.parser.os_identifier_parser(xml_root)
+        return results
+
+    async def nmap_subnet_scan(self, target, arg="-p-", args=None):  # requires root
+        xml_root = await self.scan_command(target=target, arg=arg, args=args)
+        results = self.parser.filter_top_ports(xml_root)
+        return results
+
+    async def nmap_list_scan(self, target, arg="-sL", args=None):  # requires root
+        xml_root = await self.scan_command(target=target, arg=arg, args=args)
+        results = self.parser.filter_top_ports(xml_root)
+        return results
+        
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="Python3 nmap")
     parser.add_argument('-d', '--d', help='Help', required=True)
     args = parser.parse_args()
     
-    nmap = Nmap()
-    result = nmap.scan_top_ports(target='127.0.0.1')
-    print(json.dumps(result, indent=4, sort_keys=True))
+    nmap = NmapAsync()
+    asyncio.run(nmap.nmap_version_detection(target='127.0.0.1'))

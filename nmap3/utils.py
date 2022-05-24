@@ -24,11 +24,11 @@ import sys
 import re
 import os
 import ctypes
+import functools
 
 __author__ = 'Wangolo Joel (inquiry@nmapper.com)'
 __version__ = '1.4.9'
 __last_modification__ = '2019/12/11'
-
 
 def get_nmap_path():
     """
@@ -53,7 +53,6 @@ def get_nmap_path():
             return output.decode('utf8').strip().replace("\\", "/")
         else:
             return output.decode('utf8').strip()
-
 
 def get_nmap_version():
     nmap = get_nmap_path()
@@ -82,3 +81,17 @@ def user_is_root(func):
         else:
             return {"error":True, "msg":"You must be root/administrator to continue!"}
     return wrapper 
+
+def nmap_is_installed_async():
+    def wrapper(func):
+        @functools.wraps(func)
+        async def wrapped(*args, **kwargs):
+            nmap_path = get_nmap_path()
+                
+            if(os.path.exists(nmap_path)):
+                return await func(*args, **kwargs)
+            else:
+                print({"error":True, "msg":"Nmap has not been install on this system yet!"})
+                return {"error":True, "msg":"Nmap has not been install on this system yet!"}
+        return wrapped
+    return  wrapper 
