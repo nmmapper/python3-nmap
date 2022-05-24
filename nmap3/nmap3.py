@@ -34,8 +34,8 @@ from nmap3.exceptions import NmapNotInstalledError, NmapXMLParserError, NmapExec
 import xml
 
 __author__ = 'Wangolo Joel (inquiry@nmapper.com)'
-__version__ = '1.4.9'
-__last_modification__ = 'Jan/14/2022'
+__version__ = '1.5.2'
+__last_modification__ = 'May/24/2022'
 
 OS_TYPE = sys.platform
 
@@ -218,7 +218,6 @@ class Nmap(object):
         nmap -oX - nmmapper.com -O
         NOTE: Requires root
         """
-        print("Performing some scannins")
         xml_root = self.scan_command(target=target, arg=arg, args=args)
         results = self.parser.os_identifier_parser(xml_root)
         return results
@@ -508,7 +507,7 @@ class NmapAsync(Nmap):
                 raise (e)
             else:
                 if 0 != process.returncode:
-                    raise NmapExecutionError('Error during command: "' + ' '.join(cmd) + '"\n\n' + errs.decode('utf8'))
+                    raise NmapExecutionError('Error during command: "' + ' '.join(cmd) + '"\n\n' + stderr.decode('utf8'))
 
                 # Response is bytes so decode the output and return
                 return data.decode('utf8').strip()
