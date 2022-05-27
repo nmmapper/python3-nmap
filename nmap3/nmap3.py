@@ -28,9 +28,15 @@ import argparse
 import asyncio
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import ParseError
-from nmap3.nmapparser import NmapCommandParser
-from nmap3.utils import get_nmap_path, user_is_root
-from nmap3.exceptions import NmapNotInstalledError, NmapXMLParserError, NmapExecutionError
+
+from nmapparser import NmapCommandParser
+from utils import get_nmap_path, user_is_root
+from exceptions import NmapNotInstalledError, NmapXMLParserError, NmapExecutionError
+
+#from nmap3.nmapparser import NmapCommandParser
+#from nmap3.utils import get_nmap_path, user_is_root
+#from nmap3.exceptions import NmapNotInstalledError, NmapXMLParserError, NmapExecutionError
+
 import xml
 
 __author__ = 'Wangolo Joel (inquiry@nmapper.com)'
@@ -575,11 +581,49 @@ class NmapAsync(Nmap):
         xml_root = await self.scan_command(target=target, arg=arg, args=args)
         results = self.parser.filter_top_ports(xml_root)
         return results
+
+class NmapScanTechniquesAsync(NmapAsync,NmapScanTechniques):
+    def __init__(self, path=None):
+        super(NmapScanTechniquesAsync, self).__init__(path=path)
+        self.udp_scan = "-sU"
+        
+    async def scan_command(self, scan_type, target, args, timeout=None):
+        def tpl(i):
+            scan_template = {
+                1: self.fin_scan,
+                2: self.sync_scan,
+                3: self.tcp_connt,
+                4: self.ping_scan,
+                5: self.idle_scan,
+                6: self.udp_scan
+            }
+
+            return scan_template.get(i)
+
+        for i in range(1, 7):
+            if scan_type == tpl(i):
+                scan = " {target} {default}".format(target=target, default=scan_type)
+                scan_type_command = self.default_command() + scan
+
+                if (args):
+                    scan_type_command += " {0}".format(args)
+
+                output = await self.run_command(scan_type_command, timeout=timeout)
+                xml_root = self.get_xml_et(output)
+
+        return xml_root
+    
+    async def nmap_udp_scan(self, target, args=None):
+        if (args):
+            assert (isinstance(args, str)), "Expected string got {0} instead".format(type(args))
+        xml_root = await self.scan_command(self.udp_scan, target=target, args=args)
+        results = self.parser.filter_top_ports(xml_root)
+        return results
         
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="Python3 nmap")
     parser.add_argument('-d', '--d', help='Help', required=True)
     args = parser.parse_args()
     
-    nmap = NmapAsync()
-    asyncio.run(nmap.nmap_version_detection(target='127.0.0.1'))
+    nmap = NmapScanTechniquesAsync()
+    asyncio.run(nmap.nmap_udp_scan(target='127.0.0.1'))
