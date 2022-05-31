@@ -29,13 +29,9 @@ import asyncio
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import ParseError
 
-from nmapparser import NmapCommandParser
-from utils import get_nmap_path, user_is_root
-from exceptions import NmapNotInstalledError, NmapXMLParserError, NmapExecutionError
-
-#from nmap3.nmapparser import NmapCommandParser
-#from nmap3.utils import get_nmap_path, user_is_root
-#from nmap3.exceptions import NmapNotInstalledError, NmapXMLParserError, NmapExecutionError
+from nmap3.nmapparser import NmapCommandParser
+from nmap3.utils import get_nmap_path, user_is_root
+from nmap3.exceptions import NmapNotInstalledError, NmapXMLParserError, NmapExecutionError
 
 import xml
 
