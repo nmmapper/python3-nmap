@@ -128,7 +128,7 @@ class NmapCommandParser(object):
                 os_dict[address]["macaddress"] = self.parse_mac_address(host)
             
             os_dict["runtime"]=self.parse_runtime(xmlroot)
-            os_dict["task_service_scan"]=self.parse_task_results(xmlroot)
+            os_dict["task_results"]=self.parse_task_results(xmlroot)
             os_dict["stats"]=stats
             return os_dict
             
