@@ -99,8 +99,8 @@ class NmapCommandParser(object):
                 port_result_dict[address]["macaddress"] = self.parse_mac_address(hosts)
                 port_result_dict[address]["state"] = self.get_hostname_state(hosts)
                 
-            port_result_dict["stats"]=stats
             port_result_dict["runtime"]=self.parse_runtime(xmlroot)
+            port_result_dict["stats"]=stats
             port_result_dict["task_results"]=self.parse_task_results(xmlroot)
             
         except Exception as e:
@@ -128,8 +128,8 @@ class NmapCommandParser(object):
                 os_dict[address]["macaddress"] = self.parse_mac_address(host)
             
             os_dict["runtime"]=self.parse_runtime(xmlroot)
-            os_dict["task_results"]=self.parse_task_results(xmlroot)
             os_dict["stats"]=stats
+            os_dict["task_results"]=self.parse_task_results(xmlroot)
             return os_dict
             
         except Exception as e:
