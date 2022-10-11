@@ -101,6 +101,7 @@ class NmapCommandParser(object):
                 
             port_result_dict["stats"]=stats
             port_result_dict["runtime"]=self.parse_runtime(xmlroot)
+            port_result_dict["task_results"]=self.parse_task_results(xmlroot)
             
         except Exception as e:
             raise(e)
@@ -127,6 +128,7 @@ class NmapCommandParser(object):
                 os_dict[address]["macaddress"] = self.parse_mac_address(host)
             
             os_dict["runtime"]=self.parse_runtime(xmlroot)
+            os_dict["task_service_scan"]=self.parse_task_results(xmlroot)
             os_dict["stats"]=stats
             return os_dict
             
@@ -195,6 +197,17 @@ class NmapCommandParser(object):
         if runstats is not None:
             if runstats.find("finished") is not None:
                 return runstats.find("finished").attrib
+
+    def parse_task_results(self, xml):
+        """
+        Parse parts from xml
+        """
+        task_results = xml.findall('taskend')
+        task_results_list = []
+
+        for task_result in task_results:
+            task_results_list.append(task_result.attrib)
+        return task_results_list
     
     def parse_mac_address(self, xml):
         """

@@ -77,7 +77,8 @@ class Nmap(object):
         """
         if self.as_root:
             return self.default_command_privileged()
-        return self.default_args.format(nmap=self.nmaptool, outarg="-oX")
+        #return self.default_args.format(nmap=self.nmaptool, outarg="-oX")
+        return self.default_args.format(nmap=self.nmaptool, outarg="-v -oX") # adding extra verbosity to accomodate "task_results" output
 
     def default_command_privileged(self):
         """
