@@ -36,8 +36,8 @@ from nmap3.exceptions import NmapNotInstalledError, NmapXMLParserError, NmapExec
 import xml
 
 __author__ = 'Wangolo Joel (inquiry@nmapper.com)'
-__version__ = '1.5.2'
-__last_modification__ = 'May/24/2022'
+__version__ = '1.5.5'
+__last_modification__ = 'Oct/11/2022'
 
 OS_TYPE = sys.platform
 
@@ -77,7 +77,8 @@ class Nmap(object):
         """
         if self.as_root:
             return self.default_command_privileged()
-        return self.default_args.format(nmap=self.nmaptool, outarg="-oX")
+        #return self.default_args.format(nmap=self.nmaptool, outarg="-oX")
+        return self.default_args.format(nmap=self.nmaptool, outarg="-v -oX") # adding extra verbosity to feed "task_results" output
 
     def default_command_privileged(self):
         """
