@@ -56,7 +56,7 @@ class Nmap(object):
 
         self.nmaptool = path if path else get_nmap_path()
         self.default_args = "{nmap}  {outarg}  -  "
-        self.maxport = 65389
+        self.maxport = 65535
         self.target = ""
         self.top_ports = dict()
         self.parser = NmapCommandParser(None)
@@ -138,7 +138,7 @@ class Nmap(object):
         This top port requires root previledges
         """
         if (default > self.maxport):
-            raise ValueError("Port can not be greater than default 65389")
+            raise ValueError("Port can not be greater than default 65535")
         self.target = target
 
         if (args):
