@@ -349,7 +349,7 @@ You scan the the target IP using version detection ('-sV') to get the service an
 ```python
    import nmap3
    nmap = nmap3.Nmap()
-   ressults = nmap_version_detection("host", args="--script vulners --script-args mincvss+5.0")
+   results = nmap.nmap_version_detection("host", args="--script vulners --script-args mincvss+5.0")
 ```
 
 ## Cross-Selling
