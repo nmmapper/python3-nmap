@@ -34,6 +34,7 @@ from nmap3.utils import get_nmap_path, user_is_root
 from nmap3.exceptions import NmapNotInstalledError, NmapXMLParserError, NmapExecutionError
 
 import xml
+import re
 
 __author__ = 'Wangolo Joel (inquiry@nmapper.com)'
 __version__ = '1.5.5'
@@ -122,10 +123,14 @@ class Nmap(object):
         if (args):
             scancommand += " {0}".format(args)
 
+
         scan_shlex = shlex.split(scancommand)
         output = self.run_command(scan_shlex, timeout=timeout)
+        file_name=re.search(r'(\-oX|-oN-|oG)\s+[a-zA-Z-_0-9]{1,100}\.[a-zA-Z]+',scancommand)
+        if file_name:
+            file_name=scancommand[file_name.start():file_name.end()].split(" ")[0]
+            return self.get_success_xml_et(file_name)
         xml_root = self.get_xml_et(output)
-
         return xml_root
 
     def scan_top_ports(self, target, default=10, args=None, timeout=None):
@@ -278,6 +283,16 @@ class Nmap(object):
             return ET.fromstring(command_output)
         except ParseError:
             raise NmapXMLParserError()
+
+
+    def get_success_xml_et(self,file_name):
+        root = ET.Element("root")
+        success = ET.SubElement(root, "success")
+        success.text = "Nmap scan completed successfully."
+        file_path = ET.SubElement(root, "file_path")
+        file_path.text = "{}".format(file_name)
+        ET.ElementTree(root)
+        return root
 
 class NmapScanTechniques(Nmap):
     """
