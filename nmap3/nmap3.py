@@ -306,6 +306,8 @@ class NmapScanTechniques(Nmap):
     3) FIN Scan (-sF)
     4) Ping Scan (-sP)
     5) Idle Scan (-sI)
+    6) UDP Scan (-sU)
+    7) IP Scan (-sO)
     """
 
     def __init__(self, path=None):
@@ -317,6 +319,7 @@ class NmapScanTechniques(Nmap):
         self.ping_scan = "-sP"
         self.idle_scan = "-sL"
         self.udp_scan = "-sU"
+        self.ip_scan = "-sO"
         self.parser = NmapCommandParser(None)
 
     # Unique method for repetitive tasks - Use of 'target' variable instead of 'host' or 'subnet' - no need to make difference between 2 strings that are used for the same purpose. Creating a scan template as a switcher
@@ -328,12 +331,13 @@ class NmapScanTechniques(Nmap):
                 3: self.tcp_connt,
                 4: self.ping_scan,
                 5: self.idle_scan,
-                6: self.udp_scan
+                6: self.udp_scan,
+                7: self.ip_scan
             }
 
             return scan_template.get(i)
 
-        for i in range(1, 7):
+        for i in range(1, 8):
             if scan_type == tpl(i):
                 scan = " {target} {default}".format(target=target, default=scan_type)
                 scan_type_command = self.default_command() + scan
@@ -416,6 +420,16 @@ class NmapScanTechniques(Nmap):
         @cmd nmap -sL 192.168.178.1
         """
         xml_root = self.scan_command(self.idle_scan, target=target, args=args)
+        results = self.parser.filter_top_ports(xml_root)
+        return results
+
+    def nmap_ip_scan(self, target, args=None):
+        """
+        Using nmap ip_scan
+
+        @cmd nmap -sO 192.168.178.1
+        """
+        xml_root = self.scan_command(self.ip_scan, target=target, args=args)
         results = self.parser.filter_top_ports(xml_root)
         return results
 
@@ -607,12 +621,13 @@ class NmapScanTechniquesAsync(NmapAsync,NmapScanTechniques):
                 3: self.tcp_connt,
                 4: self.ping_scan,
                 5: self.idle_scan,
-                6: self.udp_scan
+                6: self.udp_scan,
+                7: self.ip_scan
             }
 
             return scan_template.get(i)
 
-        for i in range(1, 7):
+        for i in range(1, 8):
             if scan_type == tpl(i):
                 scan = " {target} {default}".format(target=target, default=scan_type)
                 scan_type_command = self.default_command() + scan
