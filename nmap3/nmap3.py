@@ -123,7 +123,6 @@ class Nmap(object):
         if (args):
             scancommand += " {0}".format(args)
 
-
         scan_shlex = shlex.split(scancommand)
         output = self.run_command(scan_shlex, timeout=timeout)
         file_name=re.search(r'(\-oX|-oN-|oG)\s+[a-zA-Z-_0-9]{1,100}\.[a-zA-Z]+',scancommand)
@@ -166,7 +165,7 @@ class Nmap(object):
         self.top_ports = self.parser.filter_top_ports(xml_root)
         return self.top_ports
 
-    def nmap_dns_brute_script(self, target, dns_brute="--script dns-brute.nse", timeout=None):
+    def nmap_dns_brute_script(self, target, dns_brute="--script dns-brute.nse", args=None, timeout=None):
         """
         Perform nmap scan using the dns-brute script
 
@@ -176,9 +175,11 @@ class Nmap(object):
         nmap -oX - nmmapper.com --script dns-brute.nse
         """
         self.target = target
-
         dns_brute_args = "{target}  {default}".format(target=target, default=dns_brute)
-
+        
+        if args:
+            dns_brute_args += " {0}".format(args)
+            
         dns_brute_command = self.default_command() + dns_brute_args
         dns_brute_shlex = shlex.split(dns_brute_command)  # prepare it for popen
 
@@ -572,12 +573,15 @@ class NmapAsync(Nmap):
         self.top_ports = self.parser.filter_top_ports(self.get_xml_et(output))
         return self.top_ports
     
-    async def nmap_dns_brute_script(self, target, dns_brute="--script dns-brute.nse", timeout=None):
+    async def nmap_dns_brute_script(self, target, dns_brute="--script dns-brute.nse", args=None, timeout=None):
         self.target = target
 
         dns_brute_args = "{target}  {default}".format(target=target, default=dns_brute)
         dns_brute_command = self.default_command() + dns_brute_args
-
+        
+        if args:
+            dns_brute_command += " {0}".format(args)
+            
         # Run the command and get the output
         output = await self.run_command(dns_brute_command, timeout=timeout)
         subdomains = self.parser.filter_subdomains(self.get_xml_et(output))
