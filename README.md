@@ -361,3 +361,7 @@ You scan the the target IP using version detection ('-sV') to get the service an
 * [Dnsdumpster](https://dnsdumpster.readthedocs.io/)
 * [Become a patreon](https://www.patreon.com/nmmapper)
 * [Online port scanner](https://www.nmmapper.com/st/networkmapper/nmap/online-port-scanning/)
+
+
+## Stargazers over time
+[![Stargazers over time](https://starchart.cc/nmmapper/python3-nmap.svg?variant=adaptive)](https://starchart.cc/nmmapper/python3-nmap)
