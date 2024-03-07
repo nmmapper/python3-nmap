@@ -11,15 +11,14 @@ setuptools.setup(
     description="Python3-nmap converts Nmap commands into python3 methods making it very easy to use nmap in any of your python pentesting projects",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/wangoloj/python3-nmap",
+    url="https://github.com/nmmapper/python3-nmap",
     project_urls={
         'Documentation': 'https://nmap.readthedocs.io/en/latest/',
         'How it is used': 'https://www.nmmapper.com/sys/networkmapper/nmap/online-port-scanning/',
         'Homepage': 'https://www.nmmapper.com/',
-        'Source': 'https://github.com/wangoloj/python3-nmap',
+        'Source': 'https://github.com/nmmapper/python3-nmap',
         'Subdomain finder': 'https://www.nmmapper.com/sys/tools/subdomainfinder/',
         'theHarvester online': 'https://www.nmmapper.com/sys/theharvester/email-harvester-tool/online/',
-        'Crosselling': 'https://www.byogyo.com/',
     },
     packages=setuptools.find_packages(),
     classifiers=[
