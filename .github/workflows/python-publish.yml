@@ -33,7 +33,6 @@ jobs:
     - name: Build package
       run: python -m build
     - name: Publish package
-      uses: "nmmapper/python3-nmap@main"
       with:
         user: __token__
         password: ${{ secrets.PYPI_API_TOKEN }}
