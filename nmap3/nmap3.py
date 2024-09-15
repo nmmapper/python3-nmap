@@ -28,17 +28,15 @@ import argparse
 import asyncio
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import ParseError
-
 from nmap3.nmapparser import NmapCommandParser
 from nmap3.utils import get_nmap_path, user_is_root
 from nmap3.exceptions import NmapNotInstalledError, NmapXMLParserError, NmapExecutionError
-
 import xml
 import re
 
 __author__ = 'Wangolo Joel (inquiry@nmapper.com)'
-__version__ = '1.5.5'
-__last_modification__ = 'Oct/11/2022'
+__version__ = '1.6.0'
+__last_modification__ = 'Sep/15/2024'
 
 OS_TYPE = sys.platform
 
