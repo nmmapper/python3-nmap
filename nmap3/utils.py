@@ -27,8 +27,8 @@ import ctypes
 import functools
 
 __author__ = 'Wangolo Joel (inquiry@nmapper.com)'
-__version__ = '1.5.2'
-__last_modification__ = 'May/24/2022'
+__version__ = '1.6.0'
+__last_modification__ = 'Sep/15/2024'
 
 def get_nmap_path():
     """
