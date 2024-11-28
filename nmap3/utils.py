@@ -54,7 +54,7 @@ def get_nmap_path(path:str='') -> str:
     except Exception as e:
         print(e)
         sub_proc.kill()
-        raise NmapNotInstalledError()
+        raise NmapNotInstalledError(path=path)
     else:
         if os_type == 'win32':
             return output.decode('utf8').strip().replace("\\", "/")
