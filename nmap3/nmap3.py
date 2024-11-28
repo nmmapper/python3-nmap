@@ -19,19 +19,16 @@
 #
 #
 
-import os
 import shlex
 import subprocess
 import sys
-import simplejson as json
 import argparse
 import asyncio
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import ParseError
 from nmap3.nmapparser import NmapCommandParser
 from nmap3.utils import get_nmap_path, user_is_root
-from nmap3.exceptions import NmapNotInstalledError, NmapXMLParserError, NmapExecutionError
-import xml
+from nmap3.exceptions import NmapXMLParserError, NmapExecutionError
 import re
 
 __author__ = 'Wangolo Joel (inquiry@nmapper.com)'
@@ -46,14 +43,14 @@ class Nmap(object):
     by calling nmap3.Nmap()
     """
 
-    def __init__(self, path=None):
+    def __init__(self, path:str=''):
         """
         Module initialization
 
         :param path: Path where nmap is installed on a user system. On linux system it's typically on /usr/bin/nmap.
         """
 
-        self.nmaptool = path if path else get_nmap_path()
+        self.nmaptool = get_nmap_path(path) # check path, search or raise error
         self.default_args = "{nmap}  {outarg}  -  "
         self.maxport = 65535
         self.target = ""
@@ -114,7 +111,7 @@ class Nmap(object):
 
     # Unique method for repetitive tasks - Use of 'target' variable instead of 'host' or 'subnet' - no need to make difference between 2 strings that are used for the same purpose
     def scan_command(self, target, arg, args=None, timeout=None):
-        self.target == target
+        self.target = target
 
         command_args = "{target}  {default}".format(target=target, default=arg)
         scancommand = self.default_command() + command_args
@@ -216,7 +213,7 @@ class Nmap(object):
         nmap -oX - nmmapper.com -sA
         @ TODO
         """
-        xml_root = self.scan_command(target=target, arg=arg, args=args)
+        return self.scan_command(target=target, arg=arg, args=args)
         # TODO
 
     @user_is_root
@@ -257,22 +254,26 @@ class Nmap(object):
         @param: cmd--> the command we want run eg /usr/bin/nmap -oX -  nmmapper.com --top-ports 10
         @param: timeout--> command subprocess timeout in seconds.
         """
-        if (os.path.exists(self.nmaptool)):
-            sub_proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            try:
-                output, errs = sub_proc.communicate(timeout=timeout)
-            except Exception as e:
-                sub_proc.kill()
-                raise (e)
-            else:
-                if 0 != sub_proc.returncode:
-                    raise NmapExecutionError('Error during command: "' + ' '.join(cmd) + '"\n\n' + errs.decode('utf8'))
-
-                # Response is bytes so decode the output and return
-                return output.decode('utf8').strip()
+        sub_proc = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+                )
+        try:
+            output, errs = sub_proc.communicate(timeout=timeout)
+        except Exception as e:
+            sub_proc.kill()
+            raise (e)
         else:
-            raise NmapNotInstalledError()
+            if 0 != sub_proc.returncode:
+                raise NmapExecutionError(
+                        'Error during command: "' + ' '.join(cmd) + '"\n\n' \
+                        + errs.decode('utf8')
+                        )
+            # Response is bytes so decode the output and return
+            return output.decode('utf8').strip()
             
+
     def get_xml_et(self, command_output):
         """
         @ return xml ET
@@ -309,7 +310,7 @@ class NmapScanTechniques(Nmap):
     7) IP Scan (-sO)
     """
 
-    def __init__(self, path=None):
+    def __init__(self, path:str=''):
         super(NmapScanTechniques, self).__init__(path=path)
 
         self.sync_scan = "-sS"
@@ -350,7 +351,9 @@ class NmapScanTechniques(Nmap):
                 output = self.run_command(scan_shlex, timeout=timeout)
                 xml_root = self.get_xml_et(output)
 
-        return xml_root
+                return xml_root
+        raise Exception("Something went wrong")
+            
 
     @user_is_root
     def nmap_fin_scan(self, target, args=None):
@@ -442,7 +445,7 @@ class NmapHostDiscovery(Nmap):
     4) Disable DNS resolution    (-n)
     """
 
-    def __init__(self, path=None):
+    def __init__(self, path:str=''):
         super(NmapHostDiscovery, self).__init__(path=path)
 
         self.port_scan_only = "-Pn"
@@ -476,7 +479,8 @@ class NmapHostDiscovery(Nmap):
                 output = self.run_command(scan_shlex, timeout=timeout)
                 xml_root = self.get_xml_et(output)
 
-        return xml_root
+                return xml_root
+        raise Exception("Something went wrong")
 
     def nmap_portscan_only(self, target, args=None):
         """
@@ -523,30 +527,34 @@ class NmapHostDiscovery(Nmap):
         return results
 
 class NmapAsync(Nmap):
-    def __init__(self, path=None):
+    def __init__(self, path:str=''):
         super(NmapAsync, self).__init__(path=path)
         self.stdout = asyncio.subprocess.PIPE
         self.stderr = asyncio.subprocess.PIPE
         
     async def run_command(self, cmd, timeout=None):        
-        if (os.path.exists(self.nmaptool)):            
-            process = await asyncio.create_subprocess_shell(cmd,stdout=self.stdout,stderr=self.stderr)
+        process = await asyncio.create_subprocess_shell(
+                cmd,
+                stdout=self.stdout,
+                stderr=self.stderr
+                )
             
-            try:
-                data, stderr = await process.communicate()
-            except Exception as e:
-                raise (e)
-            else:
-                if 0 != process.returncode:
-                    raise NmapExecutionError('Error during command: "' + ' '.join(cmd) + '"\n\n' + stderr.decode('utf8'))
-
-                # Response is bytes so decode the output and return
-                return data.decode('utf8').strip()
+        try:
+            data, stderr = await process.communicate()
+        except Exception as e:
+            raise (e)
         else:
-            raise NmapNotInstalledError()
+            if 0 != process.returncode:
+                raise NmapExecutionError(
+                    'Error during command: "' + ' '.join(cmd) + '"\n\n' + \
+                    stderr.decode('utf8')
+                    )
+
+            # Response is bytes so decode the output and return
+            return data.decode('utf8').strip()
     
     async def scan_command(self, target, arg, args=None, timeout=None):
-        self.target == target
+        self.target = target
 
         command_args = "{target}  {default}".format(target=target, default=arg)
         scancommand = self.default_command() + command_args
@@ -611,7 +619,7 @@ class NmapAsync(Nmap):
         return results
 
 class NmapScanTechniquesAsync(NmapAsync,NmapScanTechniques):
-    def __init__(self, path=None):
+    def __init__(self, path:str=''):
         super(NmapScanTechniquesAsync, self).__init__(path=path)
         self.udp_scan = "-sU"
         
@@ -640,7 +648,8 @@ class NmapScanTechniquesAsync(NmapAsync,NmapScanTechniques):
                 output = await self.run_command(scan_type_command, timeout=timeout)
                 xml_root = self.get_xml_et(output)
 
-        return xml_root
+                return xml_root
+        raise Exception("Something went wrong")
     
     async def nmap_udp_scan(self, target, args=None):
         if (args):
