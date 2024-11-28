@@ -38,7 +38,7 @@ def get_nmap_path(path:str='') -> str:
     by calling which nmap
     If not found raises NmapNotInstalledError
     """
-    if (os.path.exists(path)):
+    if path and (os.path.exists(path)):
         return path
 
     os_type = sys.platform
@@ -49,17 +49,15 @@ def get_nmap_path(path:str='') -> str:
     args = shlex.split(cmd)
     sub_proc = subprocess.Popen(args, stdout=subprocess.PIPE)
 
-    try:
-        output, _ = sub_proc.communicate(timeout=15)
-    except Exception as e:
+    output, e = sub_proc.communicate(timeout=15)
+    if e:
         print(e)
-        sub_proc.kill()
+
+    if not output:
         raise NmapNotInstalledError(path=path)
-    else:
-        if os_type == 'win32':
-            return output.decode('utf8').strip().replace("\\", "/")
-        else:
-            return output.decode('utf8').strip()
+    if os_type == 'win32':
+        return output.decode('utf8').strip().replace("\\", "/")
+    return output.decode('utf8').strip()
 
 def get_nmap_version():
     nmap = get_nmap_path()
