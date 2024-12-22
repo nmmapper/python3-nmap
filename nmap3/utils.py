@@ -21,20 +21,26 @@
 import shlex
 import subprocess
 import sys
-import re
 import os
 import ctypes
 import functools
+
+from nmap3.exceptions import NmapNotInstalledError
 
 __author__ = 'Wangolo Joel (inquiry@nmapper.com)'
 __version__ = '1.6.0'
 __last_modification__ = 'Sep/15/2024'
 
-def get_nmap_path():
+def get_nmap_path(path:str='') -> str: 
     """
+    Accepts path, validate it. If not valide, search nmap path
     Returns the location path where nmap is installed
     by calling which nmap
+    If not found raises NmapNotInstalledError
     """
+    if path and (os.path.exists(path)):
+        return path
+
     os_type = sys.platform
     if os_type == 'win32':
         cmd = "where nmap"
@@ -43,16 +49,15 @@ def get_nmap_path():
     args = shlex.split(cmd)
     sub_proc = subprocess.Popen(args, stdout=subprocess.PIPE)
 
-    try:
-        output, errs = sub_proc.communicate(timeout=15)
-    except Exception as e:
+    output, e = sub_proc.communicate(timeout=15)
+    if e:
         print(e)
-        sub_proc.kill()
-    else:
-        if os_type == 'win32':
-            return output.decode('utf8').strip().replace("\\", "/")
-        else:
-            return output.decode('utf8').strip()
+
+    if not output:
+        raise NmapNotInstalledError(path=path)
+    if os_type == 'win32':
+        return output.decode('utf8').strip().replace("\\", "/")
+    return output.decode('utf8').strip()
 
 def get_nmap_version():
     nmap = get_nmap_path()
@@ -62,7 +67,7 @@ def get_nmap_version():
     sub_proc = subprocess.Popen(args, stdout=subprocess.PIPE)
 
     try:
-        output, errs = sub_proc.communicate(timeout=15)
+        output, _ = sub_proc.communicate(timeout=15)
     except Exception as e:
         print(e)
         sub_proc.kill()
@@ -73,7 +78,7 @@ def user_is_root(func):
     def wrapper(*args, **kwargs):
         try:
             is_root_or_admin = (os.getuid() == 0)
-        except AttributeError as e:
+        except AttributeError:
             is_root_or_admin = ctypes.windll.shell32.IsUserAnAdmin() != 0
             
         if(is_root_or_admin):
