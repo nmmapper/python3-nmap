@@ -32,8 +32,8 @@ from nmap3.exceptions import NmapXMLParserError, NmapExecutionError
 import re
 
 __author__ = 'Wangolo Joel (inquiry@nmapper.com)'
-__version__ = '1.6.0'
-__last_modification__ = 'Sep/15/2024'
+__version__ = '1.9.3'
+__last_modification__ = 'Jun/06/2025'
 
 OS_TYPE = sys.platform
 
@@ -56,7 +56,7 @@ class Nmap(object):
         self.target = ""
         self.top_ports = dict()
         self.parser = NmapCommandParser(None)
-        self.raw_ouput = None
+        self.raw_output = None
         self.as_root = False
 
     def require_root(self, required=True):
@@ -279,7 +279,7 @@ class Nmap(object):
         @ return xml ET
         """
         try:
-            self.raw_ouput = command_output
+            self.raw_output = command_output
             return ET.fromstring(command_output)
         except ParseError:
             raise NmapXMLParserError()
