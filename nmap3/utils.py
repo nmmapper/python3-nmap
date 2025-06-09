@@ -28,8 +28,8 @@ import functools
 from nmap3.exceptions import NmapNotInstalledError
 
 __author__ = 'Wangolo Joel (inquiry@nmapper.com)'
-__version__ = '1.6.0'
-__last_modification__ = 'Sep/15/2024'
+__version__ = '1.9.3'
+__last_modification__ = 'Jun/06/2025'
 
 def get_nmap_path(path:str='') -> str: 
     """
