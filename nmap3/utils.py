@@ -24,42 +24,59 @@ import sys
 import os
 import ctypes
 import functools
+import logging
+import typing
 
 from nmap3.exceptions import NmapNotInstalledError
 
-__author__ = 'Wangolo Joel (inquiry@nmapper.com)'
-__version__ = '1.9.3'
-__last_modification__ = 'Jun/06/2025'
+__author__ = "Wangolo Joel (inquiry@nmapper.com)"
+__version__ = "1.9.3"
+__last_modification__ = "Jul/12/2025"
 
-def get_nmap_path(path:str='') -> str: 
+logger = logging.getLogger(__name__)
+
+R = typing.TypeVar("R")
+
+
+def get_nmap_path(path: typing.Optional[str] = None) -> str:
     """
-    Accepts path, validate it. If not valide, search nmap path
+    Accepts path, validate it. If not valid, search nmap path
     Returns the location path where nmap is installed
     by calling which nmap
-    If not found raises NmapNotInstalledError
+
+    :param path: Optional path to nmap binary
+    :return: Path to nmap binary
+    :raises NmapNotInstalledError: If nmap is not installed or path is not valid
     """
     if path and (os.path.exists(path)):
         return path
 
     os_type = sys.platform
-    if os_type == 'win32':
+    if os_type == "win32":
         cmd = "where nmap"
     else:
         cmd = "which nmap"
     args = shlex.split(cmd)
     sub_proc = subprocess.Popen(args, stdout=subprocess.PIPE)
 
-    output, e = sub_proc.communicate(timeout=15)
-    if e:
-        print(e)
+    output, error = sub_proc.communicate(timeout=15)
+    if error:
+        logger.error(f"Error while trying to get nmap path: {error.decode('utf8')}")
 
     if not output:
         raise NmapNotInstalledError(path=path)
-    if os_type == 'win32':
-        return output.decode('utf8').strip().replace("\\", "/")
-    return output.decode('utf8').strip()
+    if os_type == "win32":
+        return output.decode("utf8").strip().replace("\\", "/")
+    return output.decode("utf8").strip()
 
-def get_nmap_version():
+
+def get_nmap_version() -> typing.Optional[str]:
+    """
+    Returns the version of nmap installed on the system
+
+    :return: Version of nmap installed or None if an error occurs
+    :raises NmapNotInstalledError: If nmap is not installed
+    """
     nmap = get_nmap_path()
     cmd = nmap + " --version"
 
@@ -69,34 +86,58 @@ def get_nmap_version():
     try:
         output, _ = sub_proc.communicate(timeout=15)
     except Exception as e:
-        print(e)
+        logger.error(f"Error while trying to get nmap version: {e}", exc_info=True)
         sub_proc.kill()
-    else:
-        return output.decode('utf8').strip()
+        return None
+    return output.decode("utf8").strip()
 
-def user_is_root(func):
-    def wrapper(*args, **kwargs):
+
+def user_is_root(func: typing.Callable[..., R]) -> typing.Callable[..., R]:
+    """Decorator to check if the user is root or administrator."""
+
+    def wrapper(*args: typing.Any, **kwargs: typing.Any) -> typing.Union[dict, R]:
         try:
-            is_root_or_admin = (os.getuid() == 0)
+            is_root_or_admin = os.getuid() == 0
         except AttributeError:
-            is_root_or_admin = ctypes.windll.shell32.IsUserAnAdmin() != 0
-            
-        if(is_root_or_admin):
+            is_root_or_admin = ctypes.windll.shell32.IsUserAnAdmin() != 0  # type: ignore
+
+        if is_root_or_admin:
             return func(*args, **kwargs)
         else:
-            return {"error":True, "msg":"You must be root/administrator to continue!"}
-    return wrapper 
+            return {"error": True, "msg": "You must be root/administrator to continue!"}
 
-def nmap_is_installed_async():
-    def wrapper(func):
+    return typing.cast(typing.Callable[..., R], wrapper)
+
+
+def nmap_is_installed_async() -> typing.Callable[
+    [typing.Callable[..., typing.Awaitable[R]]],
+    typing.Callable[..., typing.Awaitable[R]],
+]:
+    """Decorator to check if nmap is installed before executing the function."""
+
+    def wrapper(
+        func: typing.Callable[..., typing.Awaitable[R]],
+    ) -> typing.Callable[..., typing.Awaitable[R]]:
         @functools.wraps(func)
-        async def wrapped(*args, **kwargs):
+        async def wrapped(
+            *args: typing.Any, **kwargs: typing.Any
+        ) -> typing.Union[dict, R]:
             nmap_path = get_nmap_path()
-                
-            if(os.path.exists(nmap_path)):
+
+            if os.path.exists(nmap_path):
                 return await func(*args, **kwargs)
             else:
-                print({"error":True, "msg":"Nmap has not been install on this system yet!"})
-                return {"error":True, "msg":"Nmap has not been install on this system yet!"}
-        return wrapped
-    return  wrapper 
+                logger.error(
+                    {
+                        "error": True,
+                        "msg": "Nmap has not been install on this system yet!",
+                    }
+                )
+                return {
+                    "error": True,
+                    "msg": "Nmap has not been install on this system yet!",
+                }
+
+        return typing.cast(typing.Callable[..., typing.Awaitable[R]], wrapped)
+
+    return wrapper
