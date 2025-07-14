@@ -25,7 +25,15 @@ __last_modification__ = "Jun/06/2025"
 import typing
 
 
-class NmapNotInstalledError(Exception):
+class NmapError(Exception):
+    """Base exception for all nmap3 exceptions"""
+
+    def __init__(self, message: str = "An error occurred in nmap3"):
+        self.message = message
+        super().__init__(message)
+
+
+class NmapNotInstalledError(NmapError):
     """Exception raised when nmap is not installed"""
 
     def __init__(self, path: typing.Optional[str] = None):
@@ -35,13 +43,26 @@ Provided: *{path if path else 'Not provided'}*"
         super().__init__(self.message)
 
 
-class NmapXMLParserError(Exception):
+class NmapXMLParserError(NmapError):
     """Exception raised when we can't parse the output"""
 
     def __init__(self, message: str = "Unable to parse xml output"):
-        self.message = message
         super().__init__(message)
 
 
-class NmapExecutionError(Exception):
+class NmapExecutionError(NmapError):
     """Exception raised when en error occurred during nmap call"""
+
+
+class NmapTimeoutError(NmapError):
+    """Exception raised when nmap execution times out"""
+
+    def __init__(self, message: str = "Nmap execution timed out"):
+        super().__init__(message)
+
+
+class NmapPrivilegeError(NmapError):
+    """Exception raised when nmap requires root privileges to run"""
+
+    def __init__(self, message: str = "Nmap requires root privileges to run"):
+        super().__init__(message)

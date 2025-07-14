@@ -20,21 +20,28 @@
 #
 import shlex
 import subprocess
-import sys
 import os
-import ctypes
+import sys
 import functools
 import logging
 import typing
+import asyncio
+import shutil
+import ctypes
 
-from nmap3.exceptions import NmapNotInstalledError
+from nmap3.exceptions import (
+    NmapExecutionError,
+    NmapNotInstalledError,
+    NmapPrivilegeError,
+)
 
 __author__ = "Wangolo Joel (inquiry@nmapper.com)"
 __version__ = "1.9.3"
-__last_modification__ = "Jul/12/2025"
+__last_modification__ = "Jul/14/2025"
 
 logger = logging.getLogger(__name__)
 
+T = typing.TypeVar("T")
 R = typing.TypeVar("R")
 
 
@@ -51,23 +58,10 @@ def get_nmap_path(path: typing.Optional[str] = None) -> str:
     if path and (os.path.exists(path)):
         return path
 
-    os_type = sys.platform
-    if os_type == "win32":
-        cmd = "where nmap"
-    else:
-        cmd = "which nmap"
-    args = shlex.split(cmd)
-    sub_proc = subprocess.Popen(args, stdout=subprocess.PIPE)
-
-    output, error = sub_proc.communicate(timeout=15)
-    if error:
-        logger.error(f"Error while trying to get nmap path: {error.decode('utf8')}")
-
+    output = shutil.which("nmap")
     if not output:
         raise NmapNotInstalledError(path=path)
-    if os_type == "win32":
-        return output.decode("utf8").strip().replace("\\", "/")
-    return output.decode("utf8").strip()
+    return output.strip().replace("\\", "/")
 
 
 def get_nmap_version() -> typing.Optional[str]:
@@ -81,63 +75,149 @@ def get_nmap_version() -> typing.Optional[str]:
     cmd = nmap + " --version"
 
     args = shlex.split(cmd)
-    sub_proc = subprocess.Popen(args, stdout=subprocess.PIPE)
+    process = subprocess.Popen(args, stdout=subprocess.PIPE)
 
     try:
-        output, _ = sub_proc.communicate(timeout=15)
+        output, _ = process.communicate(timeout=15)
     except Exception as e:
         logger.error(f"Error while trying to get nmap version: {e}", exc_info=True)
-        sub_proc.kill()
+        _terminate_process(process, timeout=0.2)
         return None
     return output.decode("utf8").strip()
 
 
-def user_is_root(func: typing.Callable[..., R]) -> typing.Callable[..., R]:
-    """Decorator to check if the user is root or administrator."""
+PRIVILEGE_DENIED_KEYWORDS = {
+    "root privileges",
+    "administrator",
+    "permission denied",
+    "operation not permitted",
+}
 
-    def wrapper(*args: typing.Any, **kwargs: typing.Any) -> typing.Union[dict, R]:
+
+if sys.version_info >= (3, 10) or (sys.version_info >= (3, 7) and typing.TYPE_CHECKING):
+    # For Python 3.10+ or when type checking, use proper ParamSpec typing
+    try:
+        from typing import ParamSpec
+
+        P = ParamSpec("P")  # type: ignore[no-redef]
+
+        @typing.overload  # type: ignore[no-overload-impl]
+        def requires_root_privilege(
+            func: typing.Callable[P, typing.Awaitable[T]],
+        ) -> typing.Callable[P, typing.Awaitable[T]]: ...
+
+        @typing.overload
+        def requires_root_privilege(
+            func: typing.Callable[P, T],
+        ) -> typing.Callable[P, T]: ...
+
+    except ImportError:
+        # Fallback if ParamSpec is not available
         try:
-            is_root_or_admin = os.getuid() == 0
-        except AttributeError:
-            is_root_or_admin = ctypes.windll.shell32.IsUserAnAdmin() != 0  # type: ignore
+            from typing_extensions import ParamSpec  # type: ignore[assignment]
 
-        if is_root_or_admin:
-            return func(*args, **kwargs)
-        else:
-            return {"error": True, "msg": "You must be root/administrator to continue!"}
+            P = ParamSpec("P")  # type: ignore[no-redef]
 
-    return typing.cast(typing.Callable[..., R], wrapper)
+            @typing.overload  # type: ignore[no-overload-impl,no-redef]
+            def requires_root_privilege(  # type: ignore[no-redef]
+                func: typing.Callable[P, typing.Awaitable[T]],
+            ) -> typing.Callable[P, typing.Awaitable[T]]: ...
+
+            @typing.overload
+            def requires_root_privilege(  # type: ignore[no-redef]
+                func: typing.Callable[P, T],
+            ) -> typing.Callable[P, T]: ...
+
+        except ImportError:
+            # No overloads for very old Python versions
+            pass
 
 
-def nmap_is_installed_async() -> typing.Callable[
-    [typing.Callable[..., typing.Awaitable[R]]],
-    typing.Callable[..., typing.Awaitable[R]],
-]:
-    """Decorator to check if nmap is installed before executing the function."""
+if os.name == "nt":
+    def _is_windows_admin() -> bool:
+        return ctypes.windll.shell32.IsUserAnAdmin() != 0 # type: ignore[attr-defined]
 
-    def wrapper(
-        func: typing.Callable[..., typing.Awaitable[R]],
-    ) -> typing.Callable[..., typing.Awaitable[R]]:
+
+def requires_root_privilege(  # type: ignore[no-redef]
+    func: typing.Callable[..., typing.Any],
+) -> typing.Callable[..., typing.Any]:
+    """
+    Decorator that marks a function as requiring root privileges.
+
+    If the function is called without root privileges, it catches `NmapExecutionError`
+    and raises `NmapPrivilegeError` with a message indicating insufficient privilege.
+
+    Works with both sync and async functions.
+    """
+    if asyncio.iscoroutinefunction(func):
+
         @functools.wraps(func)
-        async def wrapped(
-            *args: typing.Any, **kwargs: typing.Any
-        ) -> typing.Union[dict, R]:
-            nmap_path = get_nmap_path()
-
-            if os.path.exists(nmap_path):
-                return await func(*args, **kwargs)
-            else:
-                logger.error(
-                    {
-                        "error": True,
-                        "msg": "Nmap has not been install on this system yet!",
-                    }
+        async def async_wrapper(*args: typing.Any, **kwargs: typing.Any) -> typing.Any:
+            if os.name == "nt" and not _is_windows_admin():
+                raise NmapPrivilegeError(
+                    "You must be root/administrator to continue!"
                 )
-                return {
-                    "error": True,
-                    "msg": "Nmap has not been install on this system yet!",
-                }
+            # Proceed for other platforms as the user may already
+            # be running the program with 'sudo' or 'doas' privileges
+            try:
+                return await func(*args, **kwargs)
+            except NmapExecutionError as e:
+                msg = str(e).lower()
+                if any(keyword in msg for keyword in PRIVILEGE_DENIED_KEYWORDS):
+                    raise NmapPrivilegeError(
+                        "You must be root/administrator to continue!"
+                    ) from e
+                raise e
 
-        return typing.cast(typing.Callable[..., typing.Awaitable[R]], wrapped)
+        return async_wrapper
 
-    return wrapper
+    else:
+
+        @functools.wraps(func)
+        def sync_wrapper(*args: typing.Any, **kwargs: typing.Any) -> typing.Any:
+            if os.name == "nt" and not _is_windows_admin():
+                raise NmapPrivilegeError(
+                    "You must be root/administrator to continue!"
+                )
+            
+            # Proceed for other platforms
+            try:
+                return func(*args, **kwargs)
+            except NmapExecutionError as e:
+                msg = str(e).lower()
+                if any(keyword in msg for keyword in PRIVILEGE_DENIED_KEYWORDS):
+                    raise NmapPrivilegeError(
+                        "You must be root/administrator to continue!"
+                    ) from e
+                raise e
+
+        return sync_wrapper
+
+
+user_is_root = requires_root_privilege  # Alias for backward compatibility
+
+
+def _terminate_process(process: subprocess.Popen, timeout: float = 0.5) -> None:
+    """Terminate a (sub) process gracefully"""
+    try:
+        process.terminate()
+        process.wait(
+            timeout=timeout
+        )  # Wait to reap the process and avoid 'zombie' state
+    except subprocess.TimeoutExpired:
+        logger.warning(f"Process {process.pid!r} did not terminate gracefully")
+        process.kill()
+
+
+async def _terminate_asyncio_process(
+    process: asyncio.subprocess.Process, timeout: float = 0.5
+) -> None:
+    """Terminate a asyncio (sub) process gracefully"""
+    try:
+        process.terminate()
+        await asyncio.wait_for(
+            process.wait(), timeout=1.0
+        )  # Wait to reap the process and avoid 'zombie' state
+    except asyncio.TimeoutError:
+        logger.warning(f"Process {process.pid!r} did not terminate gracefully")
+        process.kill()

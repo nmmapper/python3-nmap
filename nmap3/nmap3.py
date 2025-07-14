@@ -19,24 +19,36 @@
 #
 #
 
+import logging
 import typing
 import shlex
 import subprocess
 import sys
+import re
 import argparse
 import asyncio
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import ParseError
+
 from nmap3.nmapparser import NmapCommandParser
-from nmap3.utils import get_nmap_path, user_is_root
-from nmap3.exceptions import NmapXMLParserError, NmapExecutionError
-import re
+from nmap3.utils import (
+    get_nmap_path,
+    user_is_root,
+    _terminate_process,
+    _terminate_asyncio_process,
+)
+from nmap3.exceptions import (
+    NmapXMLParserError,
+    NmapExecutionError,
+    NmapTimeoutError,
+)
 
 __author__ = "Wangolo Joel (inquiry@nmapper.com)"
 __version__ = "1.9.3"
-__last_modification__ = "Jun/06/2025"
+__last_modification__ = "Jun/14/2025"
 
 OS_TYPE = sys.platform
+logger = logging.getLogger(__name__)
 
 
 class BaseNmap(object):
@@ -48,7 +60,6 @@ class BaseNmap(object):
 
         :param path: Path where nmap is installed on a user system. On linux system it's typically on /usr/bin/nmap.
         """
-
         self.nmaptool = get_nmap_path(path)  # check path, search or raise error
         self.default_args = "{nmap}  {outarg}  -  "
         self.maxport = 65535
@@ -56,13 +67,19 @@ class BaseNmap(object):
         self.top_ports: typing.Dict[str, typing.Any] = {}
         self.parser = NmapCommandParser(None)
         self.raw_output: typing.Optional[str] = None
-        self.as_root = False
+        # self.as_root = False
+        # """Whether to run as root/administrator"""
 
-    def require_root(self, required: bool = True) -> None:
-        """
-        Call this method to add "sudo" in front of nmap call
-        """
-        self.as_root = required
+    # With this implementation, this method is redundant
+    # def require_root(self, required: bool = True) -> None:
+    #     """
+    #     Sets or unsets the instance to run command as 'root' user.
+    #
+    #     :param required: If True, the nmap command will be run with root privileges
+    #     :param root: The root command to use (default is "sudo" on Unix-like systems).
+    #         Can be "doas' in some Unix distributions
+    #     """
+    #     self.as_root = required
 
     def default_command(self) -> str:
         """
@@ -71,26 +88,23 @@ class BaseNmap(object):
 
         e.g nmap -oX -
         """
-        if self.as_root:
-            return self.default_command_privileged()
-        # return self.default_args.format(nmap=self.nmaptool, outarg="-oX")
-        return self.default_args.format(
+        command = self.default_args.format(
             nmap=self.nmaptool, outarg="-v -oX"
         )  # adding extra verbosity to feed "task_results" output
+        return command
 
-    def default_command_privileged(self):
-        """
-        Returns the default/root nmap command
-        that will be chained with all others
+    # This does not reaaly do much and may even introduce a recursion error
+    # def default_command_privileged(self):
+    #     """
+    #     Commands that require root privileges
+    #     """
+    #     if OS_TYPE == 'win32':
+    #         # Elevate privileges and return nmap command
+    #         # For windows now is not fully supported so just return the default
+    #         return self.default_command()
+    #     else:
+    #         return self.default_args.format(nmap=self.nmaptool, outarg="-oX")
 
-        For commands that require root privileges
-        """
-        if OS_TYPE == "win32":
-            # Elevate privileges and return nmap command
-            # For windows now is not fully supported so just return the default
-            return self.default_command()
-        else:
-            return self.default_args.format(nmap=self.nmaptool, outarg="-oX")
 
     def get_xml_et(self, command_output: str) -> ET.Element:
         """
@@ -135,24 +149,34 @@ class Nmap(BaseNmap):
         :param timeout: command subprocess timeout in seconds.
         :return: The output of the command (in the console) as a string
         """
-        sub_proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        logger.debug(f"Created subprocess with PID {process.pid!r}")
         try:
-            output, errs = sub_proc.communicate(timeout=timeout)
-        except Exception as e:
-            sub_proc.kill()
-            raise e
+            output, errs = process.communicate(timeout=timeout)
+        except subprocess.CalledProcessError as e:
+            _terminate_process(process, timeout=0.2)
+            raise NmapExecutionError(
+                'Error during command: "' + " ".join(cmd) + '"\n\n' + str(e)
+            ) from e
+        except subprocess.TimeoutExpired as e:
+            _terminate_process(process, timeout=0.2)
+            raise NmapTimeoutError(
+                'Command timed out after {timeout} seconds: "'.format(timeout=timeout)
+                + " ".join(cmd)
+                + '"\n\n'
+                + str(e)
+            ) from e
         else:
-            if 0 != sub_proc.returncode:
+            if process.returncode != 0:
                 raise NmapExecutionError(
                     'Error during command: "'
                     + " ".join(cmd)
                     + '"\n\n'
-                    + errs.decode("utf8")
+                    + str(errs.decode("utf-8"))
                 )
             # Response is bytes so decode the output and return
-            return output.decode("utf8").strip()
+            return output.decode("utf-8").strip()
 
-    # Unique method for repetitive tasks - Use of 'target' variable instead of 'host' or 'subnet' - no need to make difference between 2 strings that are used for the same purpose
     def scan_command(
         self,
         target: str,
@@ -189,9 +213,7 @@ class Nmap(BaseNmap):
         xml_root = self.get_xml_et(output)
         return xml_root
 
-    def nmap_version(
-        self,
-    ) -> typing.Dict[str, typing.Tuple[typing.Union[int, str], ...]]:
+    def nmap_version(self) -> typing.Dict[str, typing.Tuple[str, ...]]:
         """
         Returns nmap version and build details
 
@@ -199,13 +221,13 @@ class Nmap(BaseNmap):
         """
         # nmap version output is not available in XML format (eg. -oX -)
         output = self.run_command([self.nmaptool, "--version"])
-        version_data: typing.Dict[str, typing.Tuple[typing.Union[int, str], ...]] = {}
+        version_data: typing.Dict[str, typing.Tuple[str, ...]] = {}
 
         for line in output.splitlines():
             if line.startswith("Nmap version "):
                 version_string = line.split(" ")[2]
                 version_data["nmap"] = tuple(
-                    [int(part) for part in version_string.split(".")]
+                    [part for part in version_string.split(".")]
                 )
             elif line.startswith("Compiled with:"):
                 compiled_with = line.split(":")[1].strip()
@@ -356,6 +378,8 @@ class Nmap(BaseNmap):
         """
         Perform nmap's stealth scan on the target
 
+        NOTE: This ``nmap`` scan command requires root/administrator privileges
+
         :param target: can be IP or domain.
         :param arg: nmap argument for stealth scan, default is "-Pn -sZ"
         :param args: additional arguments for the scan
@@ -394,6 +418,8 @@ class Nmap(BaseNmap):
         """
         Perform nmap's OS detection scan on the target
 
+        NOTE: This ``nmap`` scan command requires root/administrator privileges
+
         :param target: can be IP or domain.
         :param arg: nmap argument for OS detection, default is "-O"
         :param args: additional arguments for the scan
@@ -403,7 +429,6 @@ class Nmap(BaseNmap):
         ```
         nmap -oX - nmmapper.com -O
         ```
-        NOTE: Requires root
         """
         xml_root = self.scan_command(target=target, arg=arg, args=args)
         results = self.parser.os_identifier_parser(xml_root)
@@ -411,9 +436,11 @@ class Nmap(BaseNmap):
 
     def nmap_subnet_scan(
         self, target: str, arg: str = "-p-", args: typing.Optional[str] = None
-    ) -> typing.Dict[str, typing.Any]:  # requires root
+    ) -> typing.Dict[str, typing.Any]:  # may require root
         """
         Perform nmap's subnet scan on the target
+
+        NOTE: This ``nmap`` scan command may require root/administrator privileges
 
         :param target: can be IP or domain.
         :param arg: nmap argument for subnet scan, default is "-p-"
@@ -424,7 +451,6 @@ class Nmap(BaseNmap):
         ```
         nmap -oX - nmmapper.com -p-
         ```
-        NOTE: Requires root
         """
         xml_root = self.scan_command(target=target, arg=arg, args=args)
         results = self.parser.filter_top_ports(xml_root)
@@ -455,7 +481,7 @@ class NmapScanTechniques(Nmap):
     Extends `Nmap` to include nmap commands
     with different scan techniques
 
-    This scan techniques include
+    These scan techniques include:
 
     1) TCP SYN Scan (-sS)
     2) TCP connect() scan (-sT)
@@ -523,6 +549,8 @@ class NmapScanTechniques(Nmap):
         """
         Perform scan using nmap's fin scan
 
+        NOTE: This ``nmap`` scan command requires root/administrator privileges
+
         :param target: can be IP or domain.
         :param args: additional arguments for the scan
         :return: A dictionary of open ports found on the target
@@ -542,6 +570,8 @@ class NmapScanTechniques(Nmap):
     ) -> typing.Dict[str, typing.Any]:
         """
         Perform syn scan on this given target
+
+        NOTE: This ``nmap`` scan command requires root/administrator privileges
 
         :param target: can be IP or domain.
         :param args: additional arguments for the scan
@@ -585,6 +615,8 @@ class NmapScanTechniques(Nmap):
     ) -> typing.Dict[str, typing.Any]:
         """
         Scan target using the nmap tcp connect
+
+        NOTE: This ``nmap`` scan command requires root/administrator privileges
 
         :param target: can be IP or domain.
         :param args: additional arguments for the scan
@@ -830,22 +862,39 @@ class NmapAsync(BaseNmap):
         if isinstance(cmd, list):
             cmd = " ".join(cmd)
 
+        # There is possibility of shell injection vulnerabilities due to shell expansion.
+        # Especially with unsanitized input or user-provided commands.
+        # But, the full shell functionality is needed here,
+        # so using `create_subprocess_exec` (safer) is not possible.
         process = await asyncio.create_subprocess_shell(
             cmd, stdout=self.stdout, stderr=self.stderr
         )
-
+        logger.debug(f"Created subprocess with PID {process.pid!r}")
         try:
             data, stderr = await process.communicate()
+        except asyncio.TimeoutError:
+            await _terminate_asyncio_process(process, timeout=0.2)
+            raise NmapTimeoutError(
+                'Command timed out after {timeout} seconds: "'.format(timeout=timeout)
+                + cmd
+                + '"'
+            )
+        except asyncio.CancelledError:
+            await _terminate_asyncio_process(process, timeout=0.2)
+            raise  # Re-propagate the CancelledError
         except Exception as e:
-            raise e
+            await _terminate_asyncio_process(process, timeout=0.2)
+            raise NmapExecutionError(
+                'Error during command: "' + cmd + '"\n\n' + str(e)
+            ) from e
         else:
-            if 0 != process.returncode:
+            if process.returncode != 0:
                 raise NmapExecutionError(
-                    'Error during command: "' + cmd + '"\n\n' + stderr.decode("utf8")
+                    'Error during command: "' + cmd + '"\n\n' + stderr.decode("utf-8")
                 )
 
             # Response is bytes so decode the output and return
-            return data.decode("utf8").strip()
+            return data.decode("utf-8").strip()
 
     async def scan_command(
         self,
@@ -871,7 +920,6 @@ class NmapAsync(BaseNmap):
 
         output = await self.run_command(scancommand, timeout=timeout)
         xml_root = self.get_xml_et(output)
-
         return xml_root
 
     async def scan_top_ports(
@@ -1008,6 +1056,8 @@ class NmapAsync(BaseNmap):
         """
         Perform nmap's stealth scan on the target
 
+        NOTE: This ``nmap`` scan command requires root/administrator privileges
+
         :param target: can be IP or domain.
         :param arg: nmap argument for stealth scan, default is "-Pn -sZ"
         :param args: additional arguments for the scan
@@ -1029,6 +1079,8 @@ class NmapAsync(BaseNmap):
         """
         Perform nmap's os detection on the target
 
+        NOTE: This ``nmap`` scan command requires root/administrator privileges
+
         :param target: can be IP or domain.
         :param arg: nmap argument for os detection, default is "-O"
         :param args: additional arguments
@@ -1045,9 +1097,11 @@ class NmapAsync(BaseNmap):
 
     async def nmap_subnet_scan(
         self, target: str, arg: str = "-p-", args: typing.Optional[str] = None
-    ) -> typing.Dict[str, typing.Any]:  # requires root
+    ) -> typing.Dict[str, typing.Any]:  # may require root
         """
         Scan target using nmap's subnet scan
+
+        NOTE: This ``nmap`` scan command may require root/administrator privileges
 
         :param target: can be IP or domain.
         :param arg: nmap argument for subnet scan, default is "-p-"
@@ -1058,7 +1112,6 @@ class NmapAsync(BaseNmap):
         ```
         nmap -oX - nmmapper.com -p-
         ```
-        NOTE: Requires root
         """
         xml_root = await self.scan_command(target=target, arg=arg, args=args)
         results = self.parser.filter_top_ports(xml_root)
@@ -1066,7 +1119,7 @@ class NmapAsync(BaseNmap):
 
     async def nmap_list_scan(
         self, target: str, arg: str = "-sL", args: typing.Optional[str] = None
-    ) -> typing.Dict[str, typing.Any]:  # requires root
+    ) -> typing.Dict[str, typing.Any]:
         """
         The list scan is a degenerate form of target discovery that simply lists each target of the network(s)
         specified, without sending any packets to the target targets.
@@ -1088,7 +1141,7 @@ class NmapScanTechniquesAsync(NmapAsync):
     Extends `NmapAsync` to include nmap commands
     with different scan techniques
 
-    This scan techniques include
+    These scan techniques include:
 
     1) TCP SYN Scan (-sS)
     2) TCP connect() scan (-sT)
@@ -1178,6 +1231,8 @@ class NmapScanTechniquesAsync(NmapAsync):
         """
         Perform scan using nmap's fin scan
 
+        NOTE: This ``nmap`` scan command requires root/administrator privileges
+
         :param target: can be IP or domain.
         :param args: additional arguments for the scan
         :return: A dictionary of open ports found on the target
@@ -1197,6 +1252,8 @@ class NmapScanTechniquesAsync(NmapAsync):
     ) -> typing.Dict[str, typing.Any]:
         """
         Perform syn scan on this given target
+
+        NOTE: This ``nmap`` scan command requires root/administrator privileges
 
         :param target: can be IP or domain.
         :param args: additional arguments for the scan
@@ -1294,8 +1351,17 @@ class NmapScanTechniquesAsync(NmapAsync):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="Python3 nmap")
-    parser.add_argument("-d", "--d", help="Help", required=True)
+    parser.add_argument("-d", "--target", help="Target IP or domain", required=True)
     args = parser.parse_args()
 
     nmap = NmapScanTechniquesAsync()
-    asyncio.run(nmap.nmap_udp_scan(target="127.0.0.1"))
+    # asyncio.run() wont work in the lowest python version supported `3.6`
+    # asyncio.run(nmap.nmap_udp_scan(target="127.0.0.1"))
+    loop = asyncio.get_event_loop()
+    try:
+        result = loop.run_until_complete(nmap.nmap_udp_scan(target=args.target))
+        print(result)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        loop.close()

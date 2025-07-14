@@ -112,7 +112,7 @@ class NmapCommandParser(object):
         port_result_dict["runtime"] = self.parse_runtime(xmlroot)
         port_result_dict["stats"] = stats
         port_result_dict["task_results"] = self.parse_task_results(xmlroot)
-        return port_result_dict
+        return dict(port_result_dict)
 
     def os_identifier_parser(self, xmlroot: ET.Element) -> typing.Dict[str, typing.Any]:
         """
@@ -141,7 +141,7 @@ class NmapCommandParser(object):
         os_dict["runtime"] = self.parse_runtime(xmlroot)
         os_dict["stats"] = stats
         os_dict["task_results"] = self.parse_task_results(xmlroot)
-        return os_dict
+        return dict(os_dict)
 
     def parse_os(
         self, os_results: ET.Element
