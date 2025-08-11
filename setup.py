@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="python3-nmap", 
+    name="python3-nmap",
     version="1.9.3",
     author="nmmapper",
     author_email="info@nmmapper.com",
@@ -13,19 +13,19 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/nmmapper/python3-nmap",
     project_urls={
-        'Documentation': 'https://nmap.readthedocs.io/en/latest/',
-        'How it is used': 'https://www.nmmapper.com/sys/networkmapper/nmap/online-port-scanning/',
-        'Homepage': 'https://www.nmmapper.com/',
-        'Source': 'https://github.com/nmmapper/python3-nmap',
-        'Subdomain finder': 'https://www.nmmapper.com/sys/tools/subdomainfinder/',
-        'theHarvester online': 'https://www.nmmapper.com/sys/theharvester/email-harvester-tool/online/',
+        "Documentation": "https://nmap.readthedocs.io/en/latest/",
+        "How it is used": "https://www.nmmapper.com/sys/networkmapper/nmap/online-port-scanning/",
+        "Homepage": "https://www.nmmapper.com/",
+        "Source": "https://github.com/nmmapper/python3-nmap",
+        "Subdomain finder": "https://www.nmmapper.com/sys/tools/subdomainfinder/",
+        "theHarvester online": "https://www.nmmapper.com/sys/theharvester/email-harvester-tool/online/",
     },
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
-    setup_requires=['wheel'],
-    install_requires=['simplejson'],
+    python_requires=">=3.6",
+    setup_requires=["wheel"],
+    install_requires=["simplejson"],
 )
