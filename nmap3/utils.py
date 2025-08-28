@@ -24,6 +24,11 @@ import sys
 import os
 import ctypes
 import functools
+import re
+import threading
+import queue
+from typing import Optional, Callable
+import time
 
 from nmap3.exceptions import NmapNotInstalledError
 
@@ -100,3 +105,81 @@ def nmap_is_installed_async():
                 return {"error":True, "msg":"Nmap has not been install on this system yet!"}
         return wrapped
     return  wrapper 
+
+def communicate_with_progress(
+    sub_proc: subprocess.Popen,
+    xml_path: str,
+    timeout: int = None,
+    progress_callback: Optional[Callable[[str], None]] = None
+) -> tuple[str, str]:
+    """
+    Reads stdout and stderr from a subprocess, optionally reporting progress.
+
+    Parameters
+    ----------
+    sub_proc : subprocess.Popen
+        The subprocess object to communicate with.
+    xml_path : str
+        Path to xml_file for io
+    timeout : int | None, optional
+        Timeout in seconds for the subprocess. If None, waits until finished.
+    progress_callback : Callable[[float], None] | None, optional
+        A callback function that is called with the current scan progress
+        and details as a string.
+
+    Returns
+    -------
+    Tuple[str, str]
+        A tuple containing xml and stderr output.
+    """
+
+    stdout_queue = queue.Queue()
+    stderr_queue = queue.Queue()
+
+    def reader(pipe, q):
+        for line in pipe:
+            q.put(line)
+        pipe.close()
+
+    #start threads to read stdout and stderr
+    t_out = threading.Thread(target=reader, args=(sub_proc.stdout, stdout_queue))
+    t_err = threading.Thread(target=reader, args=(sub_proc.stderr, stderr_queue))
+    t_out.start()
+    t_err.start()
+
+    output = ""
+    errs = ""
+    start_time = time.time()
+
+    while True:
+    
+        #Check timeout
+        if timeout is not None and (time.time() - start_time) > timeout:
+            sub_proc.kill()
+            errs += f"\nProcess killed after exceeding timeout of {timeout} seconds.\n"
+            break
+
+        if sub_proc.poll() is not None and stdout_queue.empty() and stderr_queue.empty():
+            sub_proc.kill()
+            break # finished
+
+        #Process stdout
+        while not stdout_queue.empty():
+            line = stdout_queue.get_nowait()
+            if progress_callback:
+                #grab the progress line from stdout and pass to progress_callback
+                match = re.search(r'(\d+(?:\.\d+)?)% done', line)
+                if match:
+                    progress_callback(line.strip())
+
+        #Process stderr
+        while not stderr_queue.empty():
+            line = stderr_queue.get_nowait()
+            errs += line
+
+        time.sleep(0.05) # prevent busy-loop
+
+    with open(xml_path) as f:
+        output = f.read()
+
+    return output, errs

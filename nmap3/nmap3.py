@@ -27,9 +27,12 @@ import asyncio
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import ParseError
 from nmap3.nmapparser import NmapCommandParser
-from nmap3.utils import get_nmap_path, user_is_root
+from nmap3.utils import get_nmap_path, user_is_root, communicate_with_progress
 from nmap3.exceptions import NmapXMLParserError, NmapExecutionError
 import re
+from typing import Callable, Optional
+import tempfile
+import os
 
 __author__ = 'Wangolo Joel (inquiry@nmapper.com)'
 __version__ = '1.9.3'
@@ -46,10 +49,8 @@ class Nmap(object):
     def __init__(self, path:str=''):
         """
         Module initialization
-
         :param path: Path where nmap is installed on a user system. On linux system it's typically on /usr/bin/nmap.
         """
-
         self.nmaptool = get_nmap_path(path) # check path, search or raise error
         self.default_args = "{nmap}  {outarg}  -  "
         self.maxport = 65535
@@ -110,7 +111,7 @@ class Nmap(object):
         return version_data
 
     # Unique method for repetitive tasks - Use of 'target' variable instead of 'host' or 'subnet' - no need to make difference between 2 strings that are used for the same purpose
-    def scan_command(self, target, arg, args=None, timeout=None):
+    def scan_command(self, target, arg, args=None, timeout=None, progress_callback=None):
         self.target = target
 
         command_args = "{target}  {default}".format(target=target, default=arg)
@@ -119,7 +120,7 @@ class Nmap(object):
             scancommand += " {0}".format(args)
 
         scan_shlex = shlex.split(scancommand)
-        output = self.run_command(scan_shlex, timeout=timeout)
+        output = self.run_command(scan_shlex, timeout=timeout, progress_callback=progress_callback)
         file_name=re.search(r'(\-oX|-oN-|oG)\s+[a-zA-Z-_0-9]{1,100}\.[a-zA-Z]+',scancommand)
         if file_name:
             file_name=scancommand[file_name.start():file_name.end()].split(" ")[0]
@@ -127,7 +128,7 @@ class Nmap(object):
         xml_root = self.get_xml_et(output)
         return xml_root
 
-    def scan_top_ports(self, target, default=10, args=None, timeout=None):
+    def scan_top_ports(self, target, default=10, args=None, timeout=None, progress_callback=None):
         """
         Perform nmap's top ports scan
 
@@ -150,7 +151,7 @@ class Nmap(object):
         scan_shlex = shlex.split(scan_command)
 
         # Run the command and get the output
-        output = self.run_command(scan_shlex, timeout=timeout)
+        output = self.run_command(scan_shlex, timeout=timeout, progress_callback=progress_callback)
         if not output:
             # Probaby and error was raise
             raise ValueError("Unable to perform requested command")
@@ -160,7 +161,7 @@ class Nmap(object):
         self.top_ports = self.parser.filter_top_ports(xml_root)
         return self.top_ports
 
-    def nmap_dns_brute_script(self, target, dns_brute="--script dns-brute.nse", args=None, timeout=None):
+    def nmap_dns_brute_script(self, target, dns_brute="--script dns-brute.nse", args=None, timeout=None, progress_callback=None):
         """
         Perform nmap scan using the dns-brute script
 
@@ -179,7 +180,7 @@ class Nmap(object):
         dns_brute_shlex = shlex.split(dns_brute_command)  # prepare it for popen
 
         # Run the command and get the output
-        output = self.run_command(dns_brute_shlex, timeout=timeout)
+        output = self.run_command(dns_brute_shlex, timeout=timeout, progress_callback=progress_callback)
 
         # Begin parsing the xml response
         xml_root = self.get_xml_et(output)
@@ -200,42 +201,42 @@ class Nmap(object):
 
     # Using of basic options for stealth scan
     @user_is_root
-    def nmap_stealth_scan(self, target, arg="-Pn -sZ", args=None):
+    def nmap_stealth_scan(self, target, arg="-Pn -sZ", args=None, progress_callback=None):
         """
         nmap -oX - nmmapper.com -Pn -sZ
         """
-        xml_root = self.scan_command(target=target, arg=arg, args=args)
+        xml_root = self.scan_command(target=target, arg=arg, args=args, progress_callback=None)
         self.top_ports = self.parser.filter_top_ports(xml_root)
         return self.top_ports
 
-    def nmap_detect_firewall(self, target, arg="-sA", args=None):  # requires root
+    def nmap_detect_firewall(self, target, arg="-sA", args=None, progress_callback=None):  # requires root
         """
         nmap -oX - nmmapper.com -sA
         @ TODO
         """
-        return self.scan_command(target=target, arg=arg, args=args)
+        return self.scan_command(target=target, arg=arg, args=args, progress_callback=progress_callback)
         # TODO
 
     @user_is_root
-    def nmap_os_detection(self, target, arg="-O", args=None):  # requires root
+    def nmap_os_detection(self, target, arg="-O", args=None, progress_callback=None):  # requires root
         """
         nmap -oX - nmmapper.com -O
         NOTE: Requires root
         """
-        xml_root = self.scan_command(target=target, arg=arg, args=args)
+        xml_root = self.scan_command(target=target, arg=arg, args=args, progress_callback=progress_callback)
         results = self.parser.os_identifier_parser(xml_root)
         return results
 
-    def nmap_subnet_scan(self, target, arg="-p-", args=None):  # requires root
+    def nmap_subnet_scan(self, target, arg="-p-", args=None, progress_callback=None):  # requires root
         """
         nmap -oX - nmmapper.com -p-
         NOTE: Requires root
         """
-        xml_root = self.scan_command(target=target, arg=arg, args=args)
+        xml_root = self.scan_command(target=target, arg=arg, args=args, progress_callback=progress_callback)
         results = self.parser.filter_top_ports(xml_root)
         return results
 
-    def nmap_list_scan(self, target, arg="-sL", args=None):  # requires root
+    def nmap_list_scan(self, target, arg="-sL", args=None, progress_callback=None):  # requires root
         """
         The list scan is a degenerate form of target discovery that simply lists each target of the network(s)
         specified, without sending any packets to the target targets.
@@ -243,36 +244,83 @@ class Nmap(object):
         NOTE: /usr/bin/nmap  -oX  -  192.168.178.1/24  -sL
         """
         self.target = target
-        xml_root = self.scan_command(target=target, arg=arg, args=args)
+        xml_root = self.scan_command(target=target, arg=arg, args=args, progress_callback=progress_callback)
         results = self.parser.filter_top_ports(xml_root)
         return results
 
-    def run_command(self, cmd, timeout=None):
+    def run_command(self, cmd: list[str], timeout: int | None = None, progress_callback: Optional[Callable[[str], None]] | None = None):
         """
-        Runs the nmap command using popen
+        Runs the nmap command using popen.
 
-        @param: cmd--> the command we want run eg /usr/bin/nmap -oX -  nmmapper.com --top-ports 10
-        @param: timeout--> command subprocess timeout in seconds.
+        Parameters
+        ----------
+        cmd : list[str]
+            The command to run, e.g. ['/usr/bin/nmap', '-oX', '-', 'nmmapper.com', '--top-ports', '10'].
+        timeout : int | None
+            Timeout in seconds for the subprocess. If None, waits until finished.
+        progress_callback : callable[[str], None] | None
+            Optional callback function called with the current scan progress.
+
+        Example
+        -------
+        def my_progress_callback(progress: str):
+            print(progress)
+
+        nmap = Nmap()
+        nmap.run_command(
+            cmd=["/usr/bin/nmap", "-oX", "-", "example.com", "--top-ports", "10"],
+            timeout=60,
+            progress_callback=my_progress_callback
+        )
         """
+
+        xml_path = None
+        if progress_callback:
+            #get file to store xml output if progress_callback is used
+            with tempfile.NamedTemporaryFile(mode="w+", suffix=".xml", delete=False) as tmp:
+                xml_path = tmp.name
+
+            #tell nmap to print status every 1 second
+            if "--stats-every" not in cmd:
+                cmd += ["--stats-every", "1s"]
+
+            #tell nmap to write xml to xml_path
+            if "-oX" in cmd:
+                index = cmd.index("-oX")
+                cmd[index+1] = xml_path
+            else:
+                cmd += ["-oX", xml_path]
+
         sub_proc = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                stderr=subprocess.PIPE,
+                text=True
                 )
+
         try:
-            output, errs = sub_proc.communicate(timeout=timeout)
+            if(progress_callback):
+                output, errs = communicate_with_progress(
+                    sub_proc=sub_proc,
+                    xml_path=xml_path,
+                    timeout=timeout,
+                    progress_callback=progress_callback
+                )
+            else:
+                output, errs = sub_proc.communicate(timeout=timeout)
         except Exception as e:
             sub_proc.kill()
             raise (e)
-        else:
-            if 0 != sub_proc.returncode:
-                raise NmapExecutionError(
-                        'Error during command: "' + ' '.join(cmd) + '"\n\n' \
-                        + errs.decode('utf8')
-                        )
-            # Response is bytes so decode the output and return
-            return output.decode('utf8').strip()
-            
+        finally:
+            if(xml_path):
+                os.remove(xml_path)
+
+        if 0 != sub_proc.returncode:
+            raise NmapExecutionError(
+                    'Error during command: "' + ' '.join(cmd) + '"\n\n' \
+                    + errs
+                    )
+        return output
 
     def get_xml_et(self, command_output):
         """
@@ -323,7 +371,7 @@ class NmapScanTechniques(Nmap):
         self.parser = NmapCommandParser(None)
 
     # Unique method for repetitive tasks - Use of 'target' variable instead of 'host' or 'subnet' - no need to make difference between 2 strings that are used for the same purpose. Creating a scan template as a switcher
-    def scan_command(self, scan_type, target, args, timeout=None):
+    def scan_command(self, scan_type, target, args, timeout=None, progress_callback=None):
         def tpl(i):
             scan_template = {
                 1: self.fin_scan,
@@ -348,7 +396,7 @@ class NmapScanTechniques(Nmap):
                 scan_shlex = shlex.split(scan_type_command)
 
                 # Use the ping scan parser
-                output = self.run_command(scan_shlex, timeout=timeout)
+                output = self.run_command(scan_shlex, timeout=timeout, progress_callback=progress_callback)
                 xml_root = self.get_xml_et(output)
 
                 return xml_root
@@ -356,30 +404,30 @@ class NmapScanTechniques(Nmap):
             
 
     @user_is_root
-    def nmap_fin_scan(self, target, args=None):
+    def nmap_fin_scan(self, target, args=None, progress_callback=None):
         """
         Perform scan using nmap's fin scan
 
         @cmd nmap -sF 192.168.178.1
 
         """
-        xml_root = self.scan_command(self.fin_scan, target=target, args=args)
+        xml_root = self.scan_command(self.fin_scan, target=target, args=args, progress_callback=progress_callback)
         results = self.parser.filter_top_ports(xml_root)
         return results
     
     @user_is_root
-    def nmap_syn_scan(self, target, args=None):
+    def nmap_syn_scan(self, target, args=None, progress_callback=None):
         """
         Perform syn scan on this given
         target
 
         @cmd nmap -sS 192.168.178.1
         """
-        xml_root = self.scan_command(self.sync_scan, target=target, args=args)
+        xml_root = self.scan_command(self.sync_scan, target=target, args=args, progress_callback=progress_callback)
         results = self.parser.filter_top_ports(xml_root)
         return results
 
-    def nmap_tcp_scan(self, target, args=None):
+    def nmap_tcp_scan(self, target, args=None, progress_callback=None):
         """
         Scan target using the nmap tcp connect
 
@@ -387,12 +435,12 @@ class NmapScanTechniques(Nmap):
         """
         if (args):
             assert (isinstance(args, str)), "Expected string got {0} instead".format(type(args))
-        xml_root = self.scan_command(self.tcp_connt, target=target, args=args)
+        xml_root = self.scan_command(self.tcp_connt, target=target, args=args, progress_callback=progress_callback)
         results = self.parser.filter_top_ports(xml_root)
         return results
     
     @user_is_root
-    def nmap_udp_scan(self, target, args=None):
+    def nmap_udp_scan(self, target, args=None, progress_callback=None):
         """
         Scan target using the nmap tcp connect
 
@@ -401,37 +449,37 @@ class NmapScanTechniques(Nmap):
 
         if (args):
             assert (isinstance(args, str)), "Expected string got {0} instead".format(type(args))
-        xml_root = self.scan_command(self.udp_scan, target=target, args=args)
+        xml_root = self.scan_command(self.udp_scan, target=target, args=args, progress_callback=progress_callback)
         results = self.parser.filter_top_ports(xml_root)
         return results
 
-    def nmap_ping_scan(self, target, args=None):
+    def nmap_ping_scan(self, target, args=None, progress_callback=None):
         """
         Scan target using nmaps' ping scan
 
         @cmd nmap -sP 192.168.178.1
         """
-        xml_root = self.scan_command(self.ping_scan, target=target, args=args)
+        xml_root = self.scan_command(self.ping_scan, target=target, args=args, progress_callback=progress_callback)
         results = self.parser.filter_top_ports(xml_root)
         return results
 
-    def nmap_idle_scan(self, target, args=None):
+    def nmap_idle_scan(self, target, args=None, progress_callback=None):
         """
         Using nmap idle_scan
 
         @cmd nmap -sL 192.168.178.1
         """
-        xml_root = self.scan_command(self.idle_scan, target=target, args=args)
+        xml_root = self.scan_command(self.idle_scan, target=target, args=args, progress_callback=progress_callback)
         results = self.parser.filter_top_ports(xml_root)
         return results
 
-    def nmap_ip_scan(self, target, args=None):
+    def nmap_ip_scan(self, target, args=None, progress_callback=None):
         """
         Using nmap ip_scan
 
         @cmd nmap -sO 192.168.178.1
         """
-        xml_root = self.scan_command(self.ip_scan, target=target, args=args)
+        xml_root = self.scan_command(self.ip_scan, target=target, args=args, progress_callback=progress_callback)
         results = self.parser.filter_top_ports(xml_root)
         return results
 
@@ -454,7 +502,7 @@ class NmapHostDiscovery(Nmap):
         self.disable_dns = "-n"
         self.parser = NmapCommandParser(None)
 
-    def scan_command(self, scan_type, target, args, timeout=None):
+    def scan_command(self, scan_type, target, args, timeout=None, progress_callback=None):
         def tpl(i):
             scan_template = {
                 1: self.port_scan_only,
@@ -476,23 +524,23 @@ class NmapHostDiscovery(Nmap):
                 scan_shlex = shlex.split(scan_type_command)
 
                 # Use the ping scan parser
-                output = self.run_command(scan_shlex, timeout=timeout)
+                output = self.run_command(scan_shlex, timeout=timeout, progress_callback=progress_callback)
                 xml_root = self.get_xml_et(output)
 
                 return xml_root
         raise Exception("Something went wrong")
 
-    def nmap_portscan_only(self, target, args=None):
+    def nmap_portscan_only(self, target, args=None, progress_callback=None):
         """
         Scan target using the nmap tcp connect
 
         @cmd nmap -Pn 192.168.178.1
         """
-        xml_root = self.scan_command(self.port_scan_only, target=target, args=args)
+        xml_root = self.scan_command(self.port_scan_only, target=target, args=args, progress_callback=progress_callback)
         results = self.parser.filter_top_ports(xml_root)
         return results
 
-    def nmap_no_portscan(self, target, args=None):
+    def nmap_no_portscan(self, target, args=None, progress_callback=None):
         """
         Scan target using the nmap tcp connect
 
@@ -500,29 +548,29 @@ class NmapHostDiscovery(Nmap):
         """
         if (args):
             assert (isinstance(args, str)), "Expected string got {0} instead".format(type(args))
-        xml_root = self.scan_command(self.no_port_scan, target=target, args=args)
+        xml_root = self.scan_command(self.no_port_scan, target=target, args=args, progress_callback=progress_callback)
         results = self.parser.filter_top_ports(xml_root)
         return results
 
-    def nmap_arp_discovery(self, target, args=None):
+    def nmap_arp_discovery(self, target, args=None, progress_callback=None):
         """
         Scan target using the nmap tcp connect
         @cmd nmap -PR 192.168.178.1
         """
         if (args):
             assert (isinstance(args, str)), "Expected string got {0} instead".format(type(args))
-        xml_root = self.scan_command(self.arp_discovery, target=target, args=args)
+        xml_root = self.scan_command(self.arp_discovery, target=target, args=args, progress_callback=progress_callback)
         results = self.parser.filter_top_ports(xml_root)
         return results
 
-    def nmap_disable_dns(self, target, args=None):
+    def nmap_disable_dns(self, target, args=None, progress_callback=None):
         """
         Scan target using the nmap tcp connect
         @cmd nmap -n 192.168.178.1
         """
         if (args):
             assert (isinstance(args, str)), "Expected string got {0} instead".format(type(args))
-        xml_root = self.scan_command(self.disable_dns, target=target, args=args)
+        xml_root = self.scan_command(self.disable_dns, target=target, args=args, progress_callback=progress_callback)
         results = self.parser.filter_top_ports(xml_root)
         return results
 
@@ -553,7 +601,7 @@ class NmapAsync(Nmap):
             # Response is bytes so decode the output and return
             return data.decode('utf8').strip()
     
-    async def scan_command(self, target, arg, args=None, timeout=None):
+    async def scan_command(self, target, arg, args=None, timeout=None, progress_callback=None):
         self.target = target
 
         command_args = "{target}  {default}".format(target=target, default=arg)
@@ -561,7 +609,7 @@ class NmapAsync(Nmap):
         if (args):
             scancommand += " {0}".format(args)
 
-        output = await self.run_command(scancommand, timeout=timeout)
+        output = await self.run_command(scancommand, timeout=timeout, progress_callback=progress_callback)
         xml_root = self.get_xml_et(output)
 
         return xml_root
