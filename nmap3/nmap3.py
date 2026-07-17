@@ -58,6 +58,7 @@ class Nmap(object):
         self.parser = NmapCommandParser(None)
         self.raw_output = None
         self.as_root = False
+        self.pid_callback = None
 
     def require_root(self, required=True):
         """
@@ -260,6 +261,11 @@ class Nmap(object):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
                 )
+        if self.pid_callback is not None:
+            try:
+                self.pid_callback(sub_proc.pid)
+            except Exception:
+                pass
         try:
             output, errs = sub_proc.communicate(timeout=timeout)
         except Exception as e:
@@ -538,6 +544,11 @@ class NmapAsync(Nmap):
                 stdout=self.stdout,
                 stderr=self.stderr
                 )
+        if self.pid_callback is not None:
+            try:
+                self.pid_callback(process.pid)
+            except Exception:
+                pass
             
         try:
             data, stderr = await process.communicate()
